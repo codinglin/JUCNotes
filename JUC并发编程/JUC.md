@@ -875,3 +875,327 @@ public static void main(String[] args) {
 
 ------
 
+### 常见线程安全类
+
+* String
+* Integer
+* StringBuffer
+* Random
+* Vector
+* Hashtable
+* java.util.concurrent 包下的类
+
+这里说它们是线程安全的是指，多个线程协调调用它们同一实例的某个方法时，是线程安全的。也可以理解为：
+
+* 它们的每个方法是原子的
+* 但注意它们多个方法的组合不是原子的
+
+**不可变类线程安全性**
+
+String、Integer等都是不可变类，因为其内部的状态不可以改变，因此它们的方法都是线程安全的
+
+------
+
+#### 锁原理
+
+##### Monitor
+
+Monitor 被翻译为监视器或管程
+
+每个 Java 对象都可以关联一个 Monitor 对象，Monitor 也是 class，其**实例存储在堆中**，如果使用 synchronized 给对象上锁（重量级）之后，该对象头的 Mark Word 中就被设置指向 Monitor 对象的指针，这就是重量级锁
+
+**JAVA对象头**
+
+以32位虚拟机为例
+
+* 普通对象
+
+  ![image-20221215152931044](JUC.assets/image-20221215152931044.png)
+
+- 数组对象
+
+  ![image-20221215153001246](JUC.assets/image-20221215153001246.png)
+
+- Mark Word 结构：最后两位是**锁标志位**
+
+  ![image-20221215153346176](JUC.assets/image-20221215153346176.png)
+
+Monitor结构如下
+
+![image-20221215153549073](JUC.assets/image-20221215153549073.png)
+
+- 开始时 Monitor 中 Owner 为 null
+
+- 当 Thread-2 执行 synchronized(obj) 就会将 Monitor 的所有者 Owner 置为 Thread-2，Monitor 中只能有一个 Owner，**obj 对象的 Mark Word 指向 Monitor**，把**对象原有的 MarkWord 存入线程栈中的锁记录**中（轻量级锁部分详解）
+
+  ![image-20221215155940004](JUC.assets/image-20221215155940004.png)
+
+- 在 Thread-2 上锁的过程，Thread-3、Thread-4、Thread-5 也执行 synchronized(obj)，就会进入 EntryList BLOCKED（双向链表）
+- Thread-2 执行完同步代码块的内容，根据 obj 对象头中 Monitor 地址寻找，设置 Owner 为空，把线程栈的锁记录中的对象头的值设置回 MarkWord
+- 唤醒 EntryList 中等待的线程来竞争锁，竞争是**非公平的**，如果这时有新的线程想要获取锁，可能直接就抢占到了，阻塞队列的线程就会继续阻塞
+- WaitSet 中的 Thread-0，是以前获得过锁，但条件不满足进入 WAITING 状态的线程（wait-notify 机制）
+
+注意：
+
+- synchronized 必须是进入同一个对象的 Monitor 才有上述的效果
+- 不加 synchronized 的对象不会关联监视器，不遵从以上规则
+
+------
+
+##### 字节码
+
+代码：
+
+```java
+public static void main(String[] args) {
+    Object lock = new Object();
+    synchronized (lock) {
+        System.out.println("ok");
+    }
+}
+```
+
+```
+0: 	new				#2		// new Object
+3: 	dup
+4: 	invokespecial 	#1 		// invokespecial <init>:()V，非虚方法
+7: 	astore_1 				// lock引用 -> lock
+8: 	aload_1					// lock （synchronized开始）
+9: 	dup						// 一份用来初始化，一份用来引用
+10: astore_2 				// lock引用 -> slot 2
+11: monitorenter 			// 【将 lock对象 MarkWord 置为 Monitor 指针】
+12: getstatic 		#3		// System.out
+15: ldc 			#4		// "ok"
+17: invokevirtual 	#5 		// invokevirtual println:(Ljava/lang/String;)V
+20: aload_2 				// slot 2(lock引用)
+21: monitorexit 			// 【将 lock对象 MarkWord 重置, 唤醒 EntryList】
+22: goto 30
+25: astore_3 				// any -> slot 3
+26: aload_2 				// slot 2(lock引用)
+27: monitorexit 			// 【将 lock对象 MarkWord 重置, 唤醒 EntryList】
+28: aload_3
+29: athrow
+30: return
+Exception table:
+    from to target type
+      12 22 25 		any
+      25 28 25 		any
+LineNumberTable: ...
+LocalVariableTable:
+    Start Length Slot Name Signature
+    	0 	31 		0 args [Ljava/lang/String;
+    	8 	23 		1 lock Ljava/lang/Object;
+```
+
+说明：
+
+- 通过异常 **try-catch 机制**，确保一定会被解锁
+- 方法级别的 synchronized 不会在字节码指令中有所体现
+
+------
+
+#### 锁升级
+
+##### 升级过程
+
+**synchronized 是可重入、不公平的重量级锁**，所以可以对其进行优化
+
+```
+无锁 -> 偏向锁 -> 轻量级锁 -> 重量级锁	// 随着竞争的增加，只能锁升级，不能降级
+```
+
+![image-20221215165232482](JUC.assets/image-20221215165232482.png)
+
+##### 轻量级锁
+
+一个对象有多个线程要加锁，但加锁的时间是错开的（没有竞争），可以使用轻量级锁来优化，轻量级锁对使用者是透明的（不可见）
+
+可重入锁：线程可以进入任何一个它已经拥有的锁所同步着的代码块，可重入锁最大的作用是**避免死锁**
+
+轻量级锁在没有竞争时（锁重入时），每次重入仍然需要执行 CAS 操作，Java 6 才引入的偏向锁来优化
+
+锁重入实例：
+
+```java
+static final Object obj = new Object();
+public static void method1() {
+    synchronized( obj ) {
+        // 同步块 A
+        method2();
+    }
+}
+public static void method2() {
+    synchronized( obj ) {
+    	// 同步块 B
+    }
+}
+```
+
+创建锁记录（Lock Record）对象，每个线程的**栈帧**都会包含一个锁记录的结构，存储锁定对象的 Mark Word
+
+![image-20221215183114971](JUC.assets/image-20221215183114971.png)
+
+- 让锁记录中 Object reference 指向锁住的对象，并尝试用 CAS 替换 Object 的 Mark Word，将 Mark Word 的值存入锁记录
+- 如果 CAS 替换成功，对象头中存储了锁记录地址和状态 00（轻量级锁） ，表示由该线程给对象加锁
+
+![image-20221215183714102](JUC.assets/image-20221215183714102.png)
+
+如果 CAS 失败，有两种情况：
+
+- 如果是其它线程已经持有了该 Object 的轻量级锁，这时表明有竞争，进入锁膨胀过程
+- 如果是线程自己执行了 synchronized 锁重入，就添加一条 Lock Record 作为重入的计数
+
+![image-20221215185242362](JUC.assets/image-20221215185242362.png)
+
+当退出 synchronized 代码块（解锁时）
+
+- 如果有取值为 null 的锁记录，表示有重入，这时重置锁记录，表示重入计数减 1
+
+![image-20221215185444027](JUC.assets/image-20221215185444027.png)
+
+当退出 synchronized 代码块（解锁时）锁记录的值不为 null，这时使用 CAS 将 Mark Word 的值恢复给对象头
+
+- 成功，则解锁成功
+- 失败，说明轻量级锁进行了锁膨胀或已经升级为重量级锁，进入重量级锁解锁流程
+
+##### 锁膨胀
+
+在尝试加轻量级锁的过程中，CAS 操作无法成功，可能是其它线程为此对象加上了轻量级锁（有竞争），这时需要进行锁膨胀，将轻量级锁变为**重量级锁**
+
+- 当 Thread-1 进行轻量级加锁时，Thread-0 已经对该对象加了轻量级锁
+
+![image-20221215212631976](JUC.assets/image-20221215212631976.png)
+
+* Thread-1 加轻量级锁失败，进入锁膨胀流程：为 Object 对象申请 Monitor 锁，**通过 Object 对象头获取到持锁线程**，将 Monitor 的 Owner 置为 Thread-0，将 Object 的对象头指向重量级锁地址，然后自己进入 Monitor 的 EntryList BLOCKED
+
+![image-20221215213407273](JUC.assets/image-20221215213407273.png)
+
+- 当 Thread-0 退出同步块解锁时，使用 CAS 将 Mark Word 的值恢复给对象头失败，这时进入重量级解锁流程，即按照 Monitor 地址找到 Monitor 对象，设置 Owner 为 null，唤醒 EntryList 中 BLOCKED 线程
+
+-----
+
+#### 锁优化
+
+##### 自旋锁
+
+重量级锁竞争时，尝试获取锁的线程不会立即阻塞，可以使用**自旋**（默认 10 次）来进行优化，采用循环的方式去尝试获取锁
+
+注意：
+
+- 自旋占用 CPU 时间，单核 CPU 自旋就是浪费时间，因为同一时刻只能运行一个线程，多核 CPU 自旋才能发挥优势
+- 自旋失败的线程会进入阻塞状态
+
+优点：不会进入阻塞状态，**减少线程上下文切换的消耗**
+
+缺点：当自旋的线程越来越多时，会不断的消耗 CPU 资源
+
+**自旋锁情况**
+
+* 自旋成功的情况：
+
+![image-20221215214035935](JUC.assets/image-20221215214035935.png)
+
+* 自旋失败的情况：
+
+![image-20221215215018207](JUC.assets/image-20221215215018207.png)
+
+自旋锁说明：
+
+- 在 Java 6 之后自旋锁是自适应的，比如对象刚刚的一次自旋操作成功过，那么认为这次自旋成功的可能性会高，就多自旋几次；反之，就少自旋甚至不自旋，比较智能
+- Java 7 之后不能控制是否开启自旋功能，由 JVM 控制
+
+```java
+//手写自旋锁
+public class SpinLock {
+    // 泛型装的是Thread，原子引用线程
+    AtomicReference<Thread> atomicReference = new AtomicReference<>();
+
+    public void lock() {
+        Thread thread = Thread.currentThread();
+        System.out.println(thread.getName() + " come in");
+
+        //开始自旋，期望值为null，更新值是当前线程
+        while (!atomicReference.compareAndSet(null, thread)) {
+            Thread.sleep(1000);
+            System.out.println(thread.getName() + " 正在自旋");
+        }
+        System.out.println(thread.getName() + " 自旋成功");
+    }
+
+    public void unlock() {
+        Thread thread = Thread.currentThread();
+
+        //线程使用完锁把引用变为null
+		atomicReference.compareAndSet(thread, null);
+        System.out.println(thread.getName() + " invoke unlock");
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        SpinLock lock = new SpinLock();
+        new Thread(() -> {
+            //占有锁
+            lock.lock();
+            Thread.sleep(10000); 
+
+            //释放锁
+            lock.unlock();
+        },"t1").start();
+
+        // 让main线程暂停1秒，使得t1线程，先执行
+        Thread.sleep(1000);
+
+        new Thread(() -> {
+            lock.lock();
+            lock.unlock();
+        },"t2").start();
+    }
+}
+```
+
+------
+
+##### 偏向锁
+
+<img src="JUC.assets/image-20221215215623412.png" alt="image-20221215215623412" style="zoom:60%;" />
+
+<img src="JUC.assets/image-20221215215806415.png" alt="image-20221215215806415" style="zoom:60%;" />
+
+偏向锁的思想是偏向于让第一个获取锁对象的线程，这个线程之后重新获取该锁不再需要同步操作：
+
+- 当锁对象第一次被线程获得的时候进入偏向状态，标记为 101，同时**使用 CAS 操作将线程 ID 记录到 Mark Word**。如果 CAS 操作成功，这个线程以后进入这个锁相关的同步块，查看这个线程 ID 是自己的就表示没有竞争，就不需要再进行任何同步操作
+- 当有另外一个线程去尝试获取这个锁对象时，偏向状态就宣告结束，此时撤销偏向（Revoke Bias）后恢复到未锁定或轻量级锁状态
+
+
+
+回忆一下对象头格式：
+
+![image-20221215215856558](JUC.assets/image-20221215215856558.png)
+
+一个对象创建时：
+
+- 如果开启了偏向锁（默认开启），那么对象创建后，MarkWord 值为 0x05 即最后 3 位为 101，thread、epoch、age 都为 0
+- 偏向锁是默认是延迟的，不会在程序启动时立即生效，如果想避免延迟，可以加 VM 参数 `-XX:BiasedLockingStartupDelay=0` 来禁用延迟。JDK 8 延迟 4s 开启偏向锁原因：在刚开始执行代码时，会有好多线程来抢锁，如果开偏向锁效率反而降低
+- 当一个对象已经计算过 hashCode，就再也无法进入偏向状态了
+- 添加 VM 参数 `-XX:-UseBiasedLocking` 禁用偏向锁
+
+撤销偏向锁的状态：
+
+- 调用对象的 hashCode：偏向锁的对象 MarkWord 中存储的是线程 id，调用 hashCode 导致偏向锁被撤销
+- 当有其它线程使用偏向锁对象时，会将偏向锁升级为轻量级锁
+- 调用 wait/notify，需要申请 Monitor，进入 WaitSet
+
+**批量撤销**：如果对象被多个线程访问，但没有竞争，这时偏向了线程 T1 的对象仍有机会重新偏向 T2，重偏向会重置对象的 Thread ID
+
+- 批量重偏向：当撤销偏向锁阈值超过 20 次后，JVM 会觉得是不是偏向错了，于是在给这些对象加锁时重新偏向至加锁线程
+- 批量撤销：当撤销偏向锁阈值超过 40 次后，JVM 会觉得自己确实偏向错了，根本就不该偏向，于是整个类的所有对象都会变为不可偏向的，新建的对象也是不可偏向的
+
+------
+
+##### 锁消除
+
+锁消除是指对于被检测出不可能存在竞争的共享数据的锁进行消除，这是 JVM **即时编译器的优化**
+
+锁消除主要是通过**逃逸分析**来支持，如果堆上的共享数据不可能逃逸出去被其它线程访问到，那么就可以把它们当成私有数据对待，也就可以将它们的锁进行消除（同步消除：JVM 逃逸分析）
+
+------
+
