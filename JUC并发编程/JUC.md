@@ -1418,5 +1418,26 @@ class TestLiveLock {
 
 与 synchronized 一样，都支持可重入
 
+基本语法
+
+```java
+// 获取锁
+reentrantLock.lock();
+try{
+    // 临界区
+} finally {
+    // 释放锁
+    reentrantLock.unlock();
+}
+```
+
 #### 可重入
+
+可重入是指同一个线程如果首次获得这把锁，那么因为它是这把锁的拥有者，因此有权利再次获取这把锁
+
+如果是不可重入锁，那么第二次获得锁时，自己也会被锁挡住
+
+#### 可打断
+
+#### 锁超时
 
