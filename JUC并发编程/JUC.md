@@ -332,11 +332,17 @@ Java：
 
   - 当前线程调用 t.join() 方法，注意是当前线程在 t 线程对象的监视器上等待
 
+    * t 线程结束，或调用了当前线程的 interrupt() 时，当前线程从 WAITING --> RUNNABLE
+
   - 当前线程调用 LockSupport.park() 方法
 
-- RUNNABLE <--> TIMED_WAITING：调用 obj.wait(long n) 方法、当前线程调用 t.join(long n) 方法、当前线程调用 Thread.sleep(long n)
+    * 调用LockSupport.unpark(目标线程) 或调用了线程的 interrupt()，会让目标线程从 WAITING --> RUNNABLE
+
+- RUNNABLE <--> TIMED_WAITING：调用 obj.wait(long n) 方法、当前线程调用 t.join(long n) 方法、当前线程调用 Thread.sleep(long n)、当前线程调用 LockSupport.parkNanos(long nanos) 或 LockSupport.parkUntil(long millis)
 
 - RUNNABLE <--> BLOCKED：t 线程用 synchronized(obj) 获取了对象锁时竞争失败
+
+- RUNNABLE-->TERMINATED: 当前线程所有代码运行完毕，进入TERMINATED
 
 ------
 
@@ -1198,4 +1204,219 @@ public class SpinLock {
 锁消除主要是通过**逃逸分析**来支持，如果堆上的共享数据不可能逃逸出去被其它线程访问到，那么就可以把它们当成私有数据对待，也就可以将它们的锁进行消除（同步消除：JVM 逃逸分析）
 
 ------
+
+##### 锁粗化
+
+对相同对象多次加锁，导致线程发生多次重入，频繁的加锁操作就会导致性能损耗，可以使用锁粗化方式优化
+
+如果虚拟机探测到一串的操作都对同一个对象加锁，将会把加锁的范围扩展（粗化）到整个操作序列的外部
+
+- 一些看起来没有加锁的代码，其实隐式的加了很多锁：
+
+  ```java
+  public static String concatString(String s1, String s2, String s3) {
+      return s1 + s2 + s3;
+  }
+  ```
+
+- String 是一个不可变的类，编译器会对 String 的拼接自动优化。在 JDK 1.5 之前，转化为 StringBuffer 对象的连续 append() 操作，每个 append() 方法中都有一个同步块
+
+  ```java
+  public static String concatString(String s1, String s2, String s3) {
+      StringBuffer sb = new StringBuffer();
+      sb.append(s1);
+      sb.append(s2);
+      sb.append(s3);
+      return sb.toString();
+  }
+  ```
+
+扩展到第一个 append() 操作之前直至最后一个 append() 操作之后，只需要加锁一次就可以
+
+------
+
+#### 多把锁
+
+多把不相干的锁：一间大屋子有两个功能睡觉、学习，互不相干。现在一人要学习，一人要睡觉，如果只用一间屋子（一个对象锁）的话，那么并发度很低
+
+将锁的粒度细分：
+
+- 好处，是可以增强并发度
+- 坏处，如果一个线程需要同时获得多把锁，就容易发生死锁
+
+解决方法：准备多个对象锁
+
+```java
+public static void main(String[] args) {
+    BigRoom bigRoom = new BigRoom();
+    new Thread(() -> { bigRoom.study(); }).start();
+    new Thread(() -> { bigRoom.sleep(); }).start();
+}
+class BigRoom {
+    private final Object studyRoom = new Object();
+    private final Object sleepRoom = new Object();
+
+    public void sleep() throws InterruptedException {
+        synchronized (sleepRoom) {
+            System.out.println("sleeping 2 小时");
+            Thread.sleep(2000);
+        }
+    }
+
+    public void study() throws InterruptedException {
+        synchronized (studyRoom) {
+            System.out.println("study 1 小时");
+            Thread.sleep(1000);
+        }
+    }
+}
+```
+
+-----
+
+#### 活跃性
+
+##### 死锁
+
+###### 形成
+
+死锁：多个线程同时被阻塞，它们中的一个或者全部都在等待某个资源被释放，由于线程被无限期地阻塞，因此程序不可能正常终止
+
+Java 死锁产生的四个必要条件：
+
+1. 互斥条件，即当资源被一个线程使用（占有）时，别的线程不能使用
+2. 不可剥夺条件，资源请求者不能强制从资源占有者手中夺取资源，资源只能由资源占有者主动释放
+3. 请求和保持条件，即当资源请求者在请求其他的资源的同时保持对原有资源的占有
+4. 循环等待条件，即存在一个等待循环队列：p1 要 p2 的资源，p2 要 p1 的资源，形成了一个等待环路
+
+四个条件都成立的时候，便形成死锁。死锁情况下打破上述任何一个条件，便可让死锁消失
+
+```java
+public class Dead {
+    public static Object resources1 = new Object();
+    public static Object resources2 = new Object();
+    public static void main(String[] args) {
+        new Thread(() -> {
+            // 线程1：占用资源1 ，请求资源2
+            synchronized(resources1){
+                System.out.println("线程1已经占用了资源1，开始请求资源2");
+                Thread.sleep(2000);//休息两秒，防止线程1直接运行完成。
+                //2秒内线程2肯定可以锁住资源2
+                synchronized (resources2){
+                    System.out.println("线程1已经占用了资源2");
+                }
+        }).start();
+        new Thread(() -> {
+            // 线程2：占用资源2 ，请求资源1
+            synchronized(resources2){
+                System.out.println("线程2已经占用了资源2，开始请求资源1");
+                Thread.sleep(2000);
+                synchronized (resources1){
+                    System.out.println("线程2已经占用了资源1");
+                }
+            }}
+        }).start();
+    }
+}
+```
+
+------
+
+###### 定位
+
+定位死锁的方法：
+
+- 使用 jps 定位进程 id，再用 `jstack id` 定位死锁，找到死锁的线程去查看源码，解决优化
+
+  ```java
+  "Thread-1" #12 prio=5 os_prio=0 tid=0x000000001eb69000 nid=0xd40 waiting formonitor entry [0x000000001f54f000]
+  	java.lang.Thread.State: BLOCKED (on object monitor)
+  #省略    
+  "Thread-1" #12 prio=5 os_prio=0 tid=0x000000001eb69000 nid=0xd40 waiting for monitor entry [0x000000001f54f000]
+  	java.lang.Thread.State: BLOCKED (on object monitor)
+  #省略
+  
+  Found one Java-level deadlock:
+  ===================================================
+  "Thread-1":
+      waiting to lock monitor 0x000000000361d378 (object 0x000000076b5bf1c0, a java.lang.Object),
+      which is held by "Thread-0"
+  "Thread-0":
+      waiting to lock monitor 0x000000000361e768 (object 0x000000076b5bf1d0, a java.lang.Object),
+      which is held by "Thread-1"
+      
+  Java stack information for the threads listed above:
+  ===================================================
+  "Thread-1":
+      at thread.TestDeadLock.lambda$main$1(TestDeadLock.java:28)
+      - waiting to lock <0x000000076b5bf1c0> (a java.lang.Object)
+      - locked <0x000000076b5bf1d0> (a java.lang.Object)
+      at thread.TestDeadLock$$Lambda$2/883049899.run(Unknown Source)
+      at java.lang.Thread.run(Thread.java:745)
+  "Thread-0":
+      at thread.TestDeadLock.lambda$main$0(TestDeadLock.java:15)
+      - waiting to lock <0x000000076b5bf1d0> (a java.lang.Object)
+      - locked <0x000000076b5bf1c0> (a java.lang.Object)
+      at thread.TestDeadLock$$Lambda$1/495053715
+  ```
+
+- Linux 下可以通过 top 先定位到 CPU 占用高的 Java 进程，再利用 `top -Hp 进程id` 来定位是哪个线程，最后再用 jstack 的输出来看各个线程栈
+
+- 避免死锁：避免死锁要注意加锁顺序
+
+- 可以使用 jconsole 工具，在 `jdk\bin` 目录下
+
+------
+
+##### 活锁
+
+活锁：指的是任务或者执行者没有被阻塞，由于某些条件没有满足，导致一直重复尝试—失败—尝试—失败的过程
+
+两个线程互相改变对方的结束条件，最后谁也无法结束：
+
+```java
+class TestLiveLock {
+    static volatile int count = 10;
+    static final Object lock = new Object();
+    public static void main(String[] args) {
+        new Thread(() -> {
+            // 期望减到 0 退出循环
+            while (count > 0) {
+                Thread.sleep(200);
+                count--;
+                System.out.println("线程一count:" + count);
+            }
+        }, "t1").start();
+        new Thread(() -> {
+            // 期望超过 20 退出循环
+            while (count < 20) {
+                Thread.sleep(200);
+                count++;
+                System.out.println("线程二count:"+ count);
+            }
+        }, "t2").start();
+    }
+}
+```
+
+------
+
+##### 饥饿
+
+饥饿：一个线程由于优先级太低，始终得不到 CPU 调度执行，也不能够结束
+
+------
+
+### ReentrantLock
+
+相对于 synchronized 它具备如下特点
+
+* 可中断
+* 可以设置超时时间
+* 可以设置为公平锁
+* 支持多个条件变量
+
+与 synchronized 一样，都支持可重入
+
+#### 可重入
 
