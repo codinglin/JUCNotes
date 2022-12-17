@@ -1441,3 +1441,397 @@ try{
 
 #### 锁超时
 
+#### 公平锁
+
+ReentrantLock 默认是不公平锁
+
+也可以更改为公平锁
+
+```java
+RenntrantLock lock = new ReentrantLock(true);
+```
+
+公平锁一般没有必要，会降低并发度
+
+#### 条件变量
+
+Synchronized 中也有条件变量，就是我们讲原理时那个 waitSet 休息室，当条件不满足时进入 waitSet 等待
+
+ReentrantLock 的条件变量比 synchronized 强大之处在于，它是支持多个条件变量的，这就好比
+
+* synchronized 是那些不满足条件的线程都在一间休息室等消息
+* 而 ReentrantLock 支持多间休息室，有专门的等烟休息室，专门等早餐的休息室、唤醒时也是按休息室来唤醒
+
+使用流程：
+
+* await 前需要获得锁
+* await 执行后，会释放锁，进入 conditionObject 等待
+* await 的线程被唤醒（或打断、或超时）取重新竞争 lock 锁
+* 竞争 lock 锁成功后，从 await 后继续执行
+
+------
+
+### wait-ify
+
+#### 基本使用
+
+需要获取对象锁后才可以调用 `锁对象.wait()`，notify 随机唤醒一个线程，notifyAll 唤醒所有线程去竞争 CPU
+
+Object 类 API：
+
+```java
+public final void notify():唤醒正在等待对象监视器的单个线程。
+public final void notifyAll():唤醒正在等待对象监视器的所有线程。
+public final void wait():导致当前线程等待，直到另一个线程调用该对象的notify()方法或 notifyAll()方法。
+public final native void wait(long timeout):有时限的等待, 到n毫秒后结束等待，或是被唤醒
+```
+
+说明：**wait 是挂起线程，需要唤醒的都是挂起操作**，阻塞线程可以自己去争抢锁，挂起的线程需要唤醒后去争抢锁
+
+对比 sleep()：
+
+- 原理不同：sleep() 方法是属于 Thread 类，是线程用来控制自身流程的，使此线程暂停执行一段时间而把执行机会让给其他线程；wait() 方法属于 Object 类，用于线程间通信
+- 对**锁的处理机制**不同：调用 sleep() 方法的过程中，线程不会释放对象锁，当调用 wait() 方法的时候，线程会放弃对象锁，进入等待此对象的等待锁定池（不释放锁其他线程怎么抢占到锁执行唤醒操作），但是都会释放 CPU
+- 使用区域不同：wait() 方法必须放在**同步控制方法和同步代码块（先获取锁）**中使用，sleep() 方法则可以放在任何地方使用
+
+底层原理：
+
+- Owner 线程发现条件不满足，调用 wait 方法，即可进入 WaitSet 变为 WAITING 状态
+- BLOCKED 和 WAITING 的线程都处于阻塞状态，不占用 CPU 时间片
+- BLOCKED 线程会在 Owner 线程释放锁时唤醒
+- WAITING 线程会在 Owner 线程调用 notify 或 notifyAll 时唤醒，唤醒后并不意味者立刻获得锁，**需要进入 EntryList 重新竞争**
+
+![image-20221217143514287](JUC.assets/image-20221217143514287.png)
+
+#### 代码优化
+
+虚假唤醒：notify 只能随机唤醒一个 WaitSet 中的线程，这时如果有其它线程也在等待，那么就可能唤醒不了正确的线程
+
+解决方法：采用 notifyAll
+
+notifyAll 仅解决某个线程的唤醒问题，使用 if + wait 判断仅有一次机会，一旦条件不成立，无法重新判断
+
+解决方法：用 while + wait，当条件不成立，再次 wait
+
+```java
+@Slf4j(topic = "c.demo")
+public class demo {
+    static final Object room = new Object();
+    static boolean hasCigarette = false;    //有没有烟
+    static boolean hasTakeout = false;
+
+    public static void main(String[] args) throws InterruptedException {
+        new Thread(() -> {
+            synchronized (room) {
+                log.debug("有烟没？[{}]", hasCigarette);
+                while (!hasCigarette) {//while防止虚假唤醒
+                    log.debug("没烟，先歇会！");
+                    try {
+                        room.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                log.debug("有烟没？[{}]", hasCigarette);
+                if (hasCigarette) {
+                    log.debug("可以开始干活了");
+                } else {
+                    log.debug("没干成活...");
+                }
+            }
+        }, "小南").start();
+
+        new Thread(() -> {
+            synchronized (room) {
+                Thread thread = Thread.currentThread();
+                log.debug("外卖送到没？[{}]", hasTakeout);
+                if (!hasTakeout) {
+                    log.debug("没外卖，先歇会！");
+                    try {
+                        room.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                log.debug("外卖送到没？[{}]", hasTakeout);
+                if (hasTakeout) {
+                    log.debug("可以开始干活了");
+                } else {
+                    log.debug("没干成活...");
+                }
+            }
+        }, "小女").start();
+
+
+        Thread.sleep(1000);
+        new Thread(() -> {
+        // 这里能不能加 synchronized (room)？
+            synchronized (room) {
+                hasTakeout = true;
+				//log.debug("烟到了噢！");
+                log.debug("外卖到了噢！");
+                room.notifyAll();
+            }
+        }, "送外卖的").start();
+    }
+}
+```
+
+#### 交替输出 wait-notify
+
+输出：abcabcabcabcabc
+
+```java
+/*
+	输出内容	等待标记	下一个标记
+	a		   1		  2
+	b		   2		  3
+	c		   3		  1
+*/
+class WaitNotify{
+    // 等待标记
+    private int flag;
+    
+    // 循环次数
+    private int loopNumber;
+    
+    public WaitNotify(int flag, int loopNumber){
+        this.flag = flag;
+        this.loopNumber = loopNumber;
+    }
+    
+    public void print(String str, int waitFlag, int nextFlag){
+        for (int i = 0; i < loopNumber, i++){
+            synchronized (this){
+                while(flag != waitFlag) {
+                    try {
+                        this.wait();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                System.out.print(str);
+                flag = nextFlag;
+                this.notifyAll();
+            }
+        }
+    }
+}
+
+// 测试代码
+public static void main(String[] args){
+    WaitNotify wn = new WaitNotify(1, 5);
+    new Thread(() -> {
+        wn.print("a", 1, 2);
+    }).start();
+    
+    new Thread(() -> {
+        wn.print("b", 2, 3);
+    }).start();
+    
+    new Thread(() -> {
+        wn.print("c", 3, 1);
+    }).start();
+}
+```
+
+#### 交替输出 await-signal
+
+```java
+public class Main {
+    public static void Main(String[] args) {
+        AwaitSignal awaitSignal = new AwaitSignal(5);
+        Condition a = awaitSignal.newCondition();
+        Condition b = awaitSignal.newCondition();
+        Condition c = awaitSignal.newCondition();
+        new Thread(() -> {
+            awaitSignal.print("a", a, b);
+        }).start();
+        new Thread(() -> {
+            awaitSignal.print("b", b, c);
+        }).start();
+        new Thread(() -> {
+            awaitSignal.print("c", c, a);
+        }).start();
+        
+        Thread.sleep(1000);
+        awaitSignal.lock();
+        try {
+            System.out.println("开始...");
+            a.signal();
+        } finally {
+            awaitSignal.unlock();
+        }
+    }
+}
+
+class AwaitSignal extends ReentrantLock{
+    private int loopNumber;
+    
+    public AwaitSignal(int loopNumber) {
+        this.loopNumber = loopNumber;
+    }
+    
+    public void print(String str, Condition current, Condition next){
+        for (int i = 0; i < loopNumber; i++){
+            lock();
+            try{
+                current.await();
+                System.out.print(str);
+                next.signal();
+            } catch (InterruptedException e){
+                e.printStackTrace();
+            } finally {
+                unlock();
+            }
+        }
+    }
+}
+```
+
+------
+
+### park-un
+
+LockSupport 是用来创建锁和其他同步类的**线程原语**
+
+LockSupport 类方法：
+
+- `LockSupport.park()`：暂停当前线程，挂起原语
+- `LockSupport.unpark(暂停的线程对象)`：恢复某个线程的运行
+
+```
+public static void main(String[] args) {
+    Thread t1 = new Thread(() -> {
+        System.out.println("start...");	//1
+		Thread.sleep(1000);// Thread.sleep(3000)
+        // 先 park 再 unpark 和先 unpark 再 park 效果一样，都会直接恢复线程的运行
+        System.out.println("park...");	//2
+        LockSupport.park();
+        System.out.println("resume...");//4
+    },"t1");
+    t1.start();
+   	Thread.sleep(2000);
+    System.out.println("unpark...");	//3
+    LockSupport.unpark(t1);
+}
+```
+
+LockSupport 出现就是为了增强 wait & notify 的功能：
+
+- wait，notify 和 notifyAll 必须配合 Object Monitor 一起使用，而 park、unpark 不需要
+- park & unpark **以线程为单位**来阻塞和唤醒线程，而 notify 只能随机唤醒一个等待线程，notifyAll 是唤醒所有等待线程
+- park & unpark 可以先 unpark，而 wait & notify 不能先 notify。类比生产消费，先消费发现有产品就消费，没有就等待；先生产就直接产生商品，然后线程直接消费
+- wait 会释放锁资源进入等待队列，**park 不会释放锁资源**，只负责阻塞当前线程，会释放 CPU
+
+原理：类似生产者消费者
+
+- 先 park：
+  1. 当前线程调用 Unsafe.park() 方法
+  2. 检查 _counter ，本情况为 0，这时获得 _mutex 互斥锁
+  3. 线程进入 _cond 条件变量挂起
+  4. 调用 Unsafe.unpark(Thread_0) 方法，设置 _counter 为 1
+  5. 唤醒 _cond 条件变量中的 Thread_0，Thread_0 恢复运行，设置 _counter 为 0
+
+![image-20221217202630060](JUC.assets/image-20221217202630060.png)
+
+* 先 unpark：
+  1. 调用 Unsafe.unpark(Thread_0) 方法，设置 _counter 为 1
+  2. 当前线程调用 Unsafe.park() 方法
+  3. 检查 _counter ，本情况为 1，这时线程无需挂起，继续运行，设置 _counter 为 0
+
+![image-20221217202813772](JUC.assets/image-20221217202813772.png)
+
+------
+
+#### 交替输出 park-unPark
+
+```java
+public class Main{
+    static Thread t1;
+    static Thread t2;
+    static Thread t3;
+    
+    public static void main(String[] args){
+        ParkUnpark pu = new ParkUnpark(5);
+        t1 = new Thread(() -> {
+            pu.print("a", t2);
+        });
+        t2 = new Thread(() -> {
+            pu.print("a", t3);
+        });
+        t3 = new Thread(() -> {
+            pu.print("a", t1);
+        });
+        t1.start();
+        t2.start();
+        t3.start();
+        
+        LockSupport.unpark(t1);
+    }
+}
+
+class ParkUnpark{
+    private int loopNumber;
+    
+    public ParkUnpark(int loopNumber) {
+        this.loopNumber = loopNumber;
+    }
+    
+    public void print(String str, Thread next){
+        for (int i = 0; i < loopNumber; i++){
+            LockSupport.park();
+            System.out.print(str);
+            LockSupport.unpark(next);
+        }
+    }
+}
+```
+
+------
+
+### 安全分析
+
+成员变量和静态变量：
+
+- 如果它们没有共享，则线程安全
+- 如果它们被共享了，根据它们的状态是否能够改变，分两种情况：
+  - 如果只有读操作，则线程安全
+  - 如果有读写操作，则这段代码是临界区，需要考虑线程安全问题
+
+局部变量：
+
+- 局部变量是线程安全的
+- 局部变量引用的对象不一定线程安全（逃逸分析）：
+  - 如果该对象没有逃离方法的作用访问，它是线程安全的（每一个方法有一个栈帧）
+  - 如果该对象逃离方法的作用范围，需要考虑线程安全问题（暴露引用）
+
+常见线程安全类：String、Integer、StringBuffer、Random、Vector、Hashtable、java.util.concurrent 包
+
+- 线程安全的是指，多个线程调用它们同一个实例的某个方法时，是线程安全的
+
+- **每个方法是原子的，但多个方法的组合不是原子的**，只能保证调用的方法内部安全：
+
+  ```java
+  Hashtable table = new Hashtable();
+  // 线程1，线程2
+  if(table.get("key") == null) {
+  	table.put("key", value);
+  }
+  ```
+
+无状态类线程安全，就是没有成员变量的类
+
+不可变类线程安全：String、Integer 等都是不可变类，**内部的状态不可以改变**，所以方法是线程安全
+
+- replace 等方法底层是新建一个对象，复制过去
+
+  ```java
+  Map<String,Object> map = new HashMap<>();	// 线程不安全
+  String S1 = "...";							// 线程安全
+  final String S2 = "...";					// 线程安全
+  Date D1 = new Date();						// 线程不安全
+  final Date D2 = new Date();					// 线程不安全，final让D2引用的对象不能变，但对象的内容可以变
+  ```
+
+抽象方法如果有参数，被重写后行为不确定可能造成线程不安全，被称之为外星方法：`public abstract foo(Student s);`
