@@ -1835,3 +1835,537 @@ class ParkUnpark{
   ```
 
 抽象方法如果有参数，被重写后行为不确定可能造成线程不安全，被称之为外星方法：`public abstract foo(Student s);`
+
+------
+
+### 同步模式
+
+#### 保护性暂停
+
+##### 单任务版
+
+Guarded Suspension，用在一个线程等待另一个线程的执行结果
+
+- 有一个结果需要从一个线程传递到另一个线程，让它们关联同一个 GuardedObject
+- 如果有结果不断从一个线程到另一个线程那么可以使用消息队列（见生产者/消费者）
+- JDK 中，join 的实现、Future 的实现，采用的就是此模式
+
+![image-20221217203116495](JUC.assets/image-20221217203116495.png)
+
+```java
+public static void main(String[] args) {
+    GuardedObject object = new GuardedObjectV2();
+    new Thread(() -> {
+        sleep(1);
+        object.complete(Arrays.asList("a", "b", "c"));
+    }).start();
+    
+    Object response = object.get(2500);
+    if (response != null) {
+        log.debug("get response: [{}] lines", ((List<String>) response).size());
+    } else {
+        log.debug("can't get response");
+    }
+}
+
+class GuardedObject {
+    private Object response;
+    private final Object lock = new Object();
+
+    //获取结果
+    //timeout :最大等待时间
+    public Object get(long millis) {
+        synchronized (lock) {
+            // 1) 记录最初时间
+            long begin = System.currentTimeMillis();
+            // 2) 已经经历的时间
+            long timePassed = 0;
+            while (response == null) {
+                // 4) 假设 millis 是 1000，结果在 400 时唤醒了，那么还有 600 要等
+                long waitTime = millis - timePassed;
+                log.debug("waitTime: {}", waitTime);
+                //经历时间超过最大等待时间退出循环
+                if (waitTime <= 0) {
+                    log.debug("break...");
+                    break;
+                }
+                try {
+                    lock.wait(waitTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                // 3) 如果提前被唤醒，这时已经经历的时间假设为 400
+                timePassed = System.currentTimeMillis() - begin;
+                log.debug("timePassed: {}, object is null {}",
+                        timePassed, response == null);
+            }
+            return response;
+        }
+    }
+
+    //产生结果
+    public void complete(Object response) {
+        synchronized (lock) {
+            // 条件满足，通知等待线程
+            this.response = response;
+            log.debug("notify...");
+            lock.notifyAll();
+        }
+    }
+}
+```
+
+##### 多任务版
+
+多任务版保护性暂停：
+
+```java
+public static void main(String[] args) throws InterruptedException {
+    for (int i = 0; i < 3; i++) {
+        new People().start();
+    }
+    Thread.sleep(1000);
+    for (Integer id : Mailboxes.getIds()) {
+        new Postman(id, id + "号快递到了").start();
+    }
+}
+
+@Slf4j(topic = "c.People")
+class People extends Thread{
+    @Override
+    public void run() {
+        // 收信
+        GuardedObject guardedObject = Mailboxes.createGuardedObject();
+        log.debug("开始收信i d:{}", guardedObject.getId());
+        Object mail = guardedObject.get(5000);
+        log.debug("收到信id:{}，内容:{}", guardedObject.getId(),mail);
+    }
+}
+
+class Postman extends Thread{
+    private int id;
+    private String mail;
+    //构造方法
+    @Override
+    public void run() {
+        GuardedObject guardedObject = Mailboxes.getGuardedObject(id);
+        log.debug("开始送信i d:{}，内容:{}", guardedObject.getId(),mail);
+        guardedObject.complete(mail);
+    }
+}
+
+class  Mailboxes {
+    private static Map<Integer, GuardedObject> boxes = new Hashtable<>();
+    private static int id = 1;
+
+    //产生唯一的id
+    private static synchronized int generateId() {
+        return id++;
+    }
+
+    public static GuardedObject getGuardedObject(int id) {
+        return boxes.remove(id);
+    }
+
+    public static GuardedObject createGuardedObject() {
+        GuardedObject go = new GuardedObject(generateId());
+        boxes.put(go.getId(), go);
+        return go;
+    }
+
+    public static Set<Integer> getIds() {
+        return boxes.keySet();
+    }
+}
+class GuardedObject {
+    //标识，Guarded Object
+    private int id;//添加get set方法
+}
+```
+
+#### 顺序输出
+
+顺序输出 2 1
+
+```java
+public static void main(String[] args) throws InterruptedException {
+    Thread t1 = new Thread(() -> {
+        while (true) {
+            //try { Thread.sleep(1000); } catch (InterruptedException e) { }
+            // 当没有许可时，当前线程暂停运行；有许可时，用掉这个许可，当前线程恢复运行
+            LockSupport.park();
+            System.out.println("1");
+        }
+    });
+    Thread t2 = new Thread(() -> {
+        while (true) {
+            System.out.println("2");
+            // 给线程 t1 发放『许可』（多次连续调用 unpark 只会发放一个『许可』）
+            LockSupport.unpark(t1);
+            try { Thread.sleep(500); } catch (InterruptedException e) { }
+        }
+    });
+    t1.start();
+    t2.start();
+}
+```
+
+------
+
+#### 交替输出
+
+连续输出 5 次 abc
+
+```java
+public class day2_14 {
+    public static void main(String[] args) throws InterruptedException {
+        AwaitSignal awaitSignal = new AwaitSignal(5);
+        Condition a = awaitSignal.newCondition();
+        Condition b = awaitSignal.newCondition();
+        Condition c = awaitSignal.newCondition();
+        new Thread(() -> {
+            awaitSignal.print("a", a, b);
+        }).start();
+        new Thread(() -> {
+            awaitSignal.print("b", b, c);
+        }).start();
+        new Thread(() -> {
+            awaitSignal.print("c", c, a);
+        }).start();
+
+        Thread.sleep(1000);
+        awaitSignal.lock();
+        try {
+            a.signal();
+        } finally {
+            awaitSignal.unlock();
+        }
+    }
+}
+
+class AwaitSignal extends ReentrantLock {
+    private int loopNumber;
+
+    public AwaitSignal(int loopNumber) {
+        this.loopNumber = loopNumber;
+    }
+    //参数1：打印内容  参数二：条件变量  参数二：唤醒下一个
+    public void print(String str, Condition condition, Condition next) {
+        for (int i = 0; i < loopNumber; i++) {
+            lock();
+            try {
+                condition.await();
+                System.out.print(str);
+                next.signal();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                unlock();
+            }
+        }
+    }
+}
+```
+
+------
+
+### 异步模式
+
+#### 传统版
+
+异步模式之生产者/消费者：
+
+```java
+class ShareData {
+    private int number = 0;
+    private Lock lock = new ReentrantLock();
+    private Condition condition = lock.newCondition();
+
+    public void increment() throws Exception{
+        // 同步代码块，加锁
+        lock.lock();
+        try {
+            // 判断  防止虚假唤醒
+            while(number != 0) {
+                // 等待不能生产
+                condition.await();
+            }
+            // 干活
+            number++;
+            System.out.println(Thread.currentThread().getName() + "\t " + number);
+            // 通知 唤醒
+            condition.signalAll();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void decrement() throws Exception{
+        // 同步代码块，加锁
+        lock.lock();
+        try {
+            // 判断 防止虚假唤醒
+            while(number == 0) {
+                // 等待不能消费
+                condition.await();
+            }
+            // 干活
+            number--;
+            System.out.println(Thread.currentThread().getName() + "\t " + number);
+            // 通知 唤醒
+            condition.signalAll();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+
+public class TraditionalProducerConsumer {
+	public static void main(String[] args) {
+        ShareData shareData = new ShareData();
+        // t1线程，生产
+        new Thread(() -> {
+            for (int i = 0; i < 5; i++) {
+            	shareData.increment();
+            }
+        }, "t1").start();
+
+        // t2线程，消费
+        new Thread(() -> {
+            for (int i = 0; i < 5; i++) {
+				shareData.decrement();
+            }
+        }, "t2").start(); 
+    }
+}
+```
+
+#### 改进版
+
+异步模式之生产者/消费者：
+
+- 消费队列可以用来平衡生产和消费的线程资源，不需要产生结果和消费结果的线程一一对应
+- 生产者仅负责产生结果数据，不关心数据该如何处理，而消费者专心处理结果数据
+- 消息队列是有容量限制的，满时不会再加入数据，空时不会再消耗数据
+- JDK 中各种阻塞队列，采用的就是这种模式
+
+![image-20221217203234588](JUC.assets/image-20221217203234588.png)
+
+```java
+public class demo {
+    public static void main(String[] args) {
+        MessageQueue queue = new MessageQueue(2);
+        for (int i = 0; i < 3; i++) {
+            int id = i;
+            new Thread(() -> {
+                queue.put(new Message(id,"值"+id));
+            }, "生产者" + i).start();
+        }
+        
+        new Thread(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(1000);
+                    Message message = queue.take();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        },"消费者").start();
+    }
+}
+
+//消息队列类，Java间线程之间通信
+class MessageQueue {
+    private LinkedList<Message> list = new LinkedList<>();//消息的队列集合
+    private int capacity;//队列容量
+    public MessageQueue(int capacity) {
+        this.capacity = capacity;
+    }
+
+    //获取消息
+    public Message take() {
+        //检查队列是否为空
+        synchronized (list) {
+            while (list.isEmpty()) {
+                try {
+                    sout(Thread.currentThread().getName() + ":队列为空，消费者线程等待");
+                    list.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            //从队列的头部获取消息返回
+            Message message = list.removeFirst();
+            sout(Thread.currentThread().getName() + "：已消费消息--" + message);
+            list.notifyAll();
+            return message;
+        }
+    }
+
+    //存入消息
+    public void put(Message message) {
+        synchronized (list) {
+            //检查队列是否满
+            while (list.size() == capacity) {
+                try {
+                    sout(Thread.currentThread().getName()+":队列为已满，生产者线程等待");
+                    list.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            //将消息加入队列尾部
+            list.addLast(message);
+            sout(Thread.currentThread().getName() + ":已生产消息--" + message);
+            list.notifyAll();
+        }
+    }
+}
+
+final class Message {
+    private int id;
+    private Object value;
+	//get set
+}
+```
+
+#### 阻塞队列
+
+```java
+public static void main(String[] args) {
+    ExecutorService consumer = Executors.newFixedThreadPool(1);
+    ExecutorService producer = Executors.newFixedThreadPool(1);
+    BlockingQueue<Integer> queue = new SynchronousQueue<>();
+    producer.submit(() -> {
+        try {
+            System.out.println("生产...");
+            Thread.sleep(1000);
+            queue.put(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    });
+    consumer.submit(() -> {
+        try {
+            System.out.println("等待消费...");
+            Integer result = queue.take();
+            System.out.println("结果为:" + result);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    });
+}
+```
+
+------
+
+## 共享模型之内存
+
+## 内存
+
+### JMM
+
+#### 内存模型
+
+Java 内存模型是 Java Memory Model（JMM），本身是一种**抽象的概念**，实际上并不存在，描述的是一组规则或规范，通过这组规范定义了程序中各个变量（包括实例字段，静态字段和构成数组对象的元素）的访问方式
+
+JMM 作用：
+
+- 屏蔽各种硬件和操作系统的内存访问差异，实现让 Java 程序在各种平台下都能达到一致的内存访问效果
+- 规定了线程和内存之间的一些关系
+
+根据 JMM 的设计，系统存在一个主内存（Main Memory），Java 中所有变量都存储在主存中，对于所有线程都是共享的；每条线程都有自己的工作内存（Working Memory），工作内存中保存的是主存中某些**变量的拷贝**，线程对所有变量的操作都是先对变量进行拷贝，然后在工作内存中进行，不能直接操作主内存中的变量；线程之间无法相互直接访问，线程间的通信（传递）必须通过主内存来完成
+
+<img src="JUC.assets/image-20221217205301303.png" alt="image-20221217205301303" style="zoom:50%;" />
+
+主内存和工作内存：
+
+- 主内存：计算机的内存，也就是经常提到的 8G 内存，16G 内存，存储所有共享变量的值
+- 工作内存：存储该线程使用到的共享变量在主内存的的值的副本拷贝
+
+**JVM 和 JMM 之间的关系**：JMM 中的主内存、工作内存与 JVM 中的 Java 堆、栈、方法区等并不是同一个层次的内存划分，这两者基本上是没有关系的，如果两者一定要勉强对应起来：
+
+- 主内存主要对应于 Java 堆中的对象实例数据部分，而工作内存则对应于虚拟机栈中的部分区域
+- 从更低层次上说，主内存直接对应于物理硬件的内存，工作内存对应寄存器和高速缓存
+
+------
+
+#### 内存交互
+
+Java 内存模型定义了 8 个操作来完成主内存和工作内存的交互操作，每个操作都是**原子**的
+
+非原子协定：没有被 volatile 修饰的 long、double 外，默认按照两次 32 位的操作
+
+<img src="JUC.assets/image-20221217205327400.png" alt="image-20221217205327400" style="zoom:80%;" />
+
+- lock：作用于主内存，将一个变量标识为被一个线程独占状态（对应 monitorenter）
+- unclock：作用于主内存，将一个变量从独占状态释放出来，释放后的变量才可以被其他线程锁定（对应 monitorexit）
+- read：作用于主内存，把一个变量的值从主内存传输到工作内存中
+- load：作用于工作内存，在 read 之后执行，把 read 得到的值放入工作内存的变量副本中
+- use：作用于工作内存，把工作内存中一个变量的值传递给**执行引擎**，每当遇到一个使用到变量的操作时都要使用该指令
+- assign：作用于工作内存，把从执行引擎接收到的一个值赋给工作内存的变量
+- store：作用于工作内存，把工作内存的一个变量的值传送到主内存中
+- write：作用于主内存，在 store 之后执行，把 store 得到的值放入主内存的变量中
+
+------
+
+#### 三大特性
+
+##### 可见性
+
+可见性：是指当多个线程访问同一个变量时，一个线程修改了这个变量的值，其他线程能够立即看得到修改的值
+
+存在不可见问题的根本原因是由于缓存的存在，线程持有的是共享变量的副本，无法感知其他线程对于共享变量的更改，导致读取的值不是最新的。但是 final 修饰的变量是**不可变**的，就算有缓存，也不会存在不可见的问题
+
+main 线程对 run 变量的修改对于 t 线程不可见，导致了 t 线程无法停止：
+
+```java
+static boolean run = true;	//添加volatile
+public static void main(String[] args) throws InterruptedException {
+    Thread t = new Thread(()->{
+        while(run){
+        // ....
+        }
+	});
+    t.start();
+    sleep(1);
+    run = false; // 线程t不会如预想的停下来
+}
+```
+
+原因：
+
+- 初始状态， t 线程刚开始从主内存读取了 run 的值到工作内存
+- 因为 t 线程要频繁从主内存中读取 run 的值，JIT 编译器会将 run 的值缓存至自己工作内存中的高速缓存中，减少对主存中 run 的访问，提高效率
+- 1 秒之后，main 线程修改了 run 的值，并同步至主存，而 t 是从自己工作内存中的高速缓存中读取这个变量的值，结果永远是旧值
+
+<img src="JUC.assets/image-20221217213134900.png" alt="image-20221217213134900" style="zoom:50%;" />
+
+解决办法：
+
+volatile（易变关键字）
+
+它可以用来修饰成员变量和静态成员变量，它可以避免线程从自己的工作缓存中查找变量的值，必须到主内存中获取它的值，线程操作 volatile 变量都是直接操作主存
+
+```java
+// 不会从缓存中获取，而从主内存中拿到值
+volatile static boolean run = true;	//添加volatile
+public static void main(String[] args) throws InterruptedException {
+    Thread t = new Thread(()->{
+        while(run){
+        // ....
+        }
+	});
+    t.start();
+    sleep(1);
+    run = false; // 线程t不会如预想的停下来
+}
+```
+
+------
+
