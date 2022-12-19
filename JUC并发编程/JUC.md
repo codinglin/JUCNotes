@@ -2715,6 +2715,57 @@ public final class Singleton {
 - 首次使用 getInstance() 才使用 synchronized 加锁，后续使用时无需加锁
 - 第一个 if 使用了 INSTANCE 变量，是在同步块之外，但在多线程环境下会产生问题
 
+##### DCL问题
+
+getInstance 方法对应的字节码为：
+
+```java
+0: 	getstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+3: 	ifnonnull 		37
+6: 	ldc 			#3 		// class test/Singleton
+8: 	dup
+9: 	astore_0
+10: monitorenter
+11: getstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+14: ifnonnull 27
+17: new 			#3 		// class test/Singleton
+20: dup
+21: invokespecial 	#4 		// Method "<init>":()V
+24: putstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+27: aload_0
+28: monitorexit
+29: goto 37
+32: astore_1
+33: aload_0
+34: monitorexit
+35: aload_1
+36: athrow
+37: getstatic 		#2 		// Field INSTANCE:Ltest/Singleton;
+40: areturn
+```
+
+- 17 表示创建对象，将对象引用入栈
+- 20 表示复制一份对象引用，引用地址
+- 21 表示利用一个对象引用，调用构造方法初始化对象
+- 24 表示利用一个对象引用，赋值给 static INSTANCE
+
+**步骤 21 和 24 之间不存在数据依赖关系**，而且无论重排前后，程序的执行结果在单线程中并没有改变，因此这种重排优化是允许的
+
+- 关键在于 0:getstatic 这行代码在 monitor 控制之外，可以越过 monitor 读取 INSTANCE 变量的值
+- 当其他线程访问 INSTANCE 不为 null 时，由于 INSTANCE 实例未必已初始化，那么 t2 拿到的是将是一个未初始化完毕的单例返回，这就造成了线程安全的问题
+
+![image-20221219124713678](JUC.assets/image-20221219124713678.png)
+
+##### 解决方法
+
+指令重排只会保证串行语义的执行一致性（单线程），但并不会关系多线程间的语义一致性
+
+引入 volatile，来保证出现指令重排的问题，从而保证单例模式的线程安全性：
+
+```java
+private static volatile SingletonDemo INSTANCE = null;
+```
+
 ------
 
 ### 设计模式
