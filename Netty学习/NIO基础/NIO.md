@@ -688,3 +688,421 @@ position: [5], limit: [5]
   - 将缓冲区的数据通过get()方法写入到target中
 
 - 调用**compact方法**切换模式，因为缓冲区中可能还有未读的数据
+
+```java
+public class ByteBufferDemo {
+    public static void main(String[] args) {
+        ByteBuffer buffer = ByteBuffer.allocate(32);
+        // 模拟粘包+半包
+        buffer.put("Hello,world\nI'm Nyima\nHo".getBytes());
+        // 调用split函数处理
+        split(buffer);
+        buffer.put("w are you?\n".getBytes());
+        split(buffer);
+    }
+
+    private static void split(ByteBuffer buffer) {
+        // 切换为读模式
+        buffer.flip();
+        for(int i = 0; i < buffer.limit(); i++) {
+
+            // 遍历寻找分隔符
+            // get(i)不会移动position
+            if (buffer.get(i) == '\n') {
+                // 缓冲区长度
+                int length = i+1-buffer.position();
+                ByteBuffer target = ByteBuffer.allocate(length);
+                // 将前面的内容写入target缓冲区
+                for(int j = 0; j < length; j++) {
+                    // 将buffer中的数据写入target中
+                    target.put(buffer.get());
+                }
+                // 打印查看结果
+                ByteBufferUtil.debugAll(target);
+            }
+        }
+        // 切换为写模式，但是缓冲区可能未读完，这里需要使用compact
+        buffer.compact();
+    }
+}
+```
+
+运行结果
+
+```java
++--------+-------------------- all ------------------------+----------------+
+position: [12], limit: [12]
+         +-------------------------------------------------+
+         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
++--------+-------------------------------------------------+----------------+
+|00000000| 48 65 6c 6c 6f 2c 77 6f 72 6c 64 0a             |Hello,world.    |
++--------+-------------------------------------------------+----------------+
++--------+-------------------- all ------------------------+----------------+
+position: [10], limit: [10]
+         +-------------------------------------------------+
+         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
++--------+-------------------------------------------------+----------------+
+|00000000| 49 27 6d 20 4e 79 69 6d 61 0a                   |I'm Nyima.      |
++--------+-------------------------------------------------+----------------+
++--------+-------------------- all ------------------------+----------------+
+position: [13], limit: [13]
+         +-------------------------------------------------+
+         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
++--------+-------------------------------------------------+----------------+
+|00000000| 48 6f 77 20 61 72 65 20 79 6f 75 3f 0a          |How are you?.   |
++--------+-------------------------------------------------+----------------+
+```
+
+# 二、文件编程
+
+## 1、FileChannel
+
+### 工作模式
+
+FileChannel**只能在阻塞模式下工作**，所以无法搭配Selector
+
+### 获取
+
+不能直接打开 FileChannel，**必须**通过 FileInputStream、FileOutputStream 或者 RandomAccessFile 来获取 FileChannel，它们都有 getChannel 方法
+
+- 通过 FileInputStream 获取的 channel **只能读**
+- 通过 FileOutputStream 获取的 channel **只能写**
+- 通过 RandomAccessFile 是否能读写**根据构造 RandomAccessFile 时的读写模式决定**
+
+### 读取
+
+通过 FileInputStream 获取channel，通过read方法将数据写入到ByteBuffer中
+
+read方法的返回值表示读到了多少字节，若读到了文件末尾则返回-1
+
+```java
+int readBytes = channel.read(buffer);
+```
+
+**可根据返回值判断是否读取完毕**
+
+```java
+while(channel.read(buffer) > 0) {
+    // 进行对应操作
+    ...
+}
+```
+
+### 写入
+
+因为channel也是有大小的，所以 write 方法并不能保证一次将 buffer 中的内容全部写入 channel。必须**需要按照以下规则进行写入**
+
+```java
+// 通过hasRemaining()方法查看缓冲区中是否还有数据未写入到通道中
+while(buffer.hasRemaining()) {
+	channel.write(buffer);
+}
+```
+
+### 关闭
+
+通道需要close，一般情况通过try-with-resource进行关闭，**最好使用以下方法获取strea以及channel，避免某些原因使得资源未被关闭**
+
+```java
+public class TestChannel {
+    public static void main(String[] args) throws IOException {
+        try (FileInputStream fis = new FileInputStream("stu.txt");
+             FileOutputStream fos = new FileOutputStream("student.txt");
+             FileChannel inputChannel = fis.getChannel();
+             FileChannel outputChannel = fos.getChannel()) {
+            
+            // 执行对应操作
+            ...
+        }
+    }
+}
+```
+
+### 位置
+
+**position**
+
+channel也拥有一个保存读取数据位置的属性，即position
+
+```java
+long pos = channel.position();
+```
+
+可以通过position(int pos)设置channel中position的值
+
+```java
+long newPos = ...;
+channel.position(newPos);
+```
+
+设置当前位置时，如果设置为文件的末尾
+
+- 这时读取会返回 -1
+- 这时写入，会追加内容，但要注意如果 position 超过了文件末尾，再写入时在新内容和原末尾之间会有空洞（00）
+
+### 强制写入
+
+操作系统出于性能的考虑，会将数据缓存，不是立刻写入磁盘，而是等到缓存满了以后将所有数据一次性的写入磁盘。可以调用 **force(true)** 方法将文件内容和元数据（文件的权限等信息）立刻写入磁盘
+
+## 2、两个Channel传输数据
+
+### transferTo方法
+
+使用transferTo方法可以快速、高效地将一个channel中的数据传输到另一个channel中，但**一次只能传输2G的内容**
+
+transferTo底层使用了零拷贝技术
+
+```java
+public class TestChannel {
+    public static void main(String[] args){
+        try (FileInputStream fis = new FileInputStream("stu.txt");
+             FileOutputStream fos = new FileOutputStream("student.txt");
+             FileChannel inputChannel = fis.getChannel();
+             FileChannel outputChannel = fos.getChannel()) {
+            // 参数：inputChannel的起始位置，传输数据的大小，目的channel
+            // 返回值为传输的数据的字节数
+            // transferTo一次只能传输2G的数据
+            inputChannel.transferTo(0, inputChannel.size(), outputChannel);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+当传输的文件**大于2G**时，需要使用以下方法进行多次传输
+
+```java
+public class TestChannel {
+    public static void main(String[] args){
+        try (FileInputStream fis = new FileInputStream("stu.txt");
+             FileOutputStream fos = new FileOutputStream("student.txt");
+             FileChannel inputChannel = fis.getChannel();
+             FileChannel outputChannel = fos.getChannel()) {
+            long size = inputChannel.size();
+            long capacity = inputChannel.size();
+            // 分多次传输
+            while (capacity > 0) {
+                // transferTo返回值为传输了的字节数
+                capacity -= inputChannel.transferTo(size-capacity, capacity, outputChannel);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+## 3、Path与Paths
+
+- Path 用来表示文件路径
+- Paths 是工具类，用来获取 Path 实例
+
+```java
+Path source = Paths.get("1.txt"); // 相对路径 不带盘符 使用 user.dir 环境变量来定位 1.txt
+
+Path source = Paths.get("d:\\1.txt"); // 绝对路径 代表了  d:\1.txt 反斜杠需要转义
+
+Path source = Paths.get("d:/1.txt"); // 绝对路径 同样代表了  d:\1.txt
+
+Path projects = Paths.get("d:\\data", "projects"); // 代表了  d:\data\projects
+```
+
+- `.` 代表了当前路径
+- `..` 代表了上一级路径
+
+例如目录结构如下
+
+```
+d:
+	|- data
+		|- projects
+			|- a
+			|- b
+```
+
+代码
+
+```java
+Path path = Paths.get("d:\\data\\projects\\a\\..\\b");
+System.out.println(path);
+System.out.println(path.normalize()); // 正常化路径 会去除 . 以及 ..
+```
+
+输出结果为
+
+```
+d:\data\projects\a\..\b
+d:\data\projects\b
+```
+
+## 4、Files
+
+### 查找
+
+检查文件是否存在
+
+```java
+Path path = Paths.get("helloword/data.txt");
+System.out.println(Files.exists(path));
+```
+
+### 创建
+
+创建**一级目录**
+
+```java
+Path path = Paths.get("helloword/d1");
+Files.createDirectory(path);
+```
+
+- 如果目录已存在，会抛异常 FileAlreadyExistsException
+- 不能一次创建多级目录，否则会抛异常 NoSuchFileException
+
+创建**多级目录用**
+
+```java
+Path path = Paths.get("helloword/d1/d2");
+Files.createDirectories(path);
+```
+
+### 拷贝及移动
+
+**拷贝文件**
+
+```java
+Path source = Paths.get("helloword/data.txt");
+Path target = Paths.get("helloword/target.txt");
+
+Files.copy(source, target);
+```
+
+- 如果文件已存在，会抛异常 FileAlreadyExistsException
+
+如果希望用 source **覆盖**掉 target，需要用 StandardCopyOption 来控制
+
+```java
+Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+```
+
+移动文件
+
+```java
+Path source = Paths.get("helloword/data.txt");
+Path target = Paths.get("helloword/data.txt");
+
+Files.move(source, target, StandardCopyOption.ATOMIC_MOVE);
+```
+
+- **StandardCopyOption.ATOMIC_MOVE 保证文件移动的原子性**
+
+### 删除
+
+删除文件
+
+```java
+Path target = Paths.get("helloword/target.txt");
+
+Files.delete(target);
+```
+
+- 如果文件不存在，会抛异常 NoSuchFileException
+
+删除目录
+
+```java
+Path target = Paths.get("helloword/d1");
+
+Files.delete(target);
+```
+
+- 如果**目录还有内容**，会抛异常 DirectoryNotEmptyException
+
+### 遍历
+
+可以**使用Files工具类中的walkFileTree(Path, FileVisitor)方法**，其中需要传入两个参数
+
+- Path：文件起始路径
+
+- FileVisitor：文件访问器，
+
+  使用访问者模式
+
+  - 接口的实现类
+
+    SimpleFileVisitor
+
+    有四个方法
+
+    - preVisitDirectory：访问目录前的操作
+    - visitFile：访问文件的操作
+    - visitFileFailed：访问文件失败时的操作
+    - postVisitDirectory：访问目录后的操作
+
+```java
+public class TestWalkFileTree {
+    public static void main(String[] args) throws IOException {
+        Path path = Paths.get("F:\\JDK 8");
+        // 文件目录数目
+        AtomicInteger dirCount = new AtomicInteger();
+        // 文件数目
+        AtomicInteger fileCount = new AtomicInteger();
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>(){
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                System.out.println("===>"+dir);
+                // 增加文件目录数
+                dirCount.incrementAndGet();
+                return super.preVisitDirectory(dir, attrs);
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                System.out.println(file);
+                // 增加文件数
+                fileCount.incrementAndGet();
+                return super.visitFile(file, attrs);
+            }
+        });
+        // 打印数目
+        System.out.println("文件目录数:"+dirCount.get());
+        System.out.println("文件数:"+fileCount.get());
+    }
+}
+```
+
+运行结果如下
+
+```java
+...
+===>F:\JDK 8\lib\security\policy\unlimited
+F:\JDK 8\lib\security\policy\unlimited\local_policy.jar
+F:\JDK 8\lib\security\policy\unlimited\US_export_policy.jar
+F:\JDK 8\lib\security\trusted.libraries
+F:\JDK 8\lib\sound.properties
+F:\JDK 8\lib\tzdb.dat
+F:\JDK 8\lib\tzmappings
+F:\JDK 8\LICENSE
+F:\JDK 8\README.txt
+F:\JDK 8\release
+F:\JDK 8\THIRDPARTYLICENSEREADME-JAVAFX.txt
+F:\JDK 8\THIRDPARTYLICENSEREADME.txt
+F:\JDK 8\Welcome.html
+文件目录数:23
+文件数:279
+```
+
+# 三、网络编程
+
+## 1、阻塞
+
+- 阻塞模式下，相关方法都会导致线程暂停
+  - ServerSocketChannel.accept 会在**没有连接建立时**让线程暂停
+  - SocketChannel.read 会在**通道中没有数据可读时**让线程暂停
+  - 阻塞的表现其实就是线程暂停了，暂停期间不会占用 cpu，但线程相当于闲置
+- 单线程下，阻塞方法之间相互影响，几乎不能正常工作，需要多线程支持
+- 但多线程下，有新的问题，体现在以下方面
+  - 32 位 jvm 一个线程 320k，64 位 jvm 一个线程 1024k，如果连接数过多，必然导致 OOM，并且线程太多，反而会因为频繁上下文切换导致性能降低
+  - 可以采用线程池技术来减少线程数和线程上下文切换，但治标不治本，如果有很多连接建立，但长时间 inactive，会阻塞线程池中所有线程，因此不适合长连接，只适合短连接
+
+**服务端代码**
