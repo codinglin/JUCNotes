@@ -1106,3 +1106,124 @@ F:\JDK 8\Welcome.html
   - 可以采用线程池技术来减少线程数和线程上下文切换，但治标不治本，如果有很多连接建立，但长时间 inactive，会阻塞线程池中所有线程，因此不适合长连接，只适合短连接
 
 **服务端代码**
+
+```java
+public class Server {
+    public static void main(String[] args) {
+        // 创建缓冲区
+        ByteBuffer buffer = ByteBuffer.allocate(16);
+        // 获得服务器通道
+        try(ServerSocketChannel server = ServerSocketChannel.open()) {
+            // 为服务器通道绑定端口
+            server.bind(new InetSocketAddress(8080));
+            // 用户存放连接的集合
+            ArrayList<SocketChannel> channels = new ArrayList<>();
+            // 循环接收连接
+            while (true) {
+                System.out.println("before connecting...");
+                // 没有连接时，会阻塞线程
+                SocketChannel socketChannel = server.accept();
+                System.out.println("after connecting...");
+                channels.add(socketChannel);
+                // 循环遍历集合中的连接
+                for(SocketChannel channel : channels) {
+                    System.out.println("before reading");
+                    // 处理通道中的数据
+                    // 当通道中没有数据可读时，会阻塞线程
+                    channel.read(buffer);
+                    buffer.flip();
+                    ByteBufferUtil.debugRead(buffer);
+                    buffer.clear();
+                    System.out.println("after reading");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+**客户端代码**
+
+```java
+public class Client {
+    public static void main(String[] args) {
+        try (SocketChannel socketChannel = SocketChannel.open()) {
+            // 建立连接
+            socketChannel.connect(new InetSocketAddress("localhost", 8080));
+            System.out.println("waiting...");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+## 2、非阻塞
+
+- 可以通过ServerSocketChannel的configureBlocking(**false**)方法将**获得连接设置为非阻塞的**。此时若没有连接，accept会返回null
+- 可以通过SocketChannel的configureBlocking(**false**)方法将从通道中**读取数据设置为非阻塞的**。若此时通道中没有数据可读，read会返回-1
+
+**服务器代码如下**
+
+```java
+public class Server {
+    public static void main(String[] args) {
+        // 创建缓冲区
+        ByteBuffer buffer = ByteBuffer.allocate(16);
+        // 获得服务器通道
+        try(ServerSocketChannel server = ServerSocketChannel.open()) {
+            // 为服务器通道绑定端口
+            server.bind(new InetSocketAddress(8080));
+            // 用户存放连接的集合
+            ArrayList<SocketChannel> channels = new ArrayList<>();
+            // 循环接收连接
+            while (true) {
+                // 设置为非阻塞模式，没有连接时返回null，不会阻塞线程
+                server.configureBlocking(false);
+                SocketChannel socketChannel = server.accept();
+                // 通道不为空时才将连接放入到集合中
+                if (socketChannel != null) {
+                    System.out.println("after connecting...");
+                    channels.add(socketChannel);
+                }
+                // 循环遍历集合中的连接
+                for(SocketChannel channel : channels) {
+                    // 处理通道中的数据
+                    // 设置为非阻塞模式，若通道中没有数据，会返回0，不会阻塞线程
+                    channel.configureBlocking(false);
+                    int read = channel.read(buffer);
+                    if(read > 0) {
+                        buffer.flip();
+                        ByteBufferUtil.debugRead(buffer);
+                        buffer.clear();
+                        System.out.println("after reading");
+                    }
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+这样写存在一个问题，因为设置为了非阻塞，会一直执行while(true)中的代码，CPU一直处于忙碌状态，会使得性能变低，所以实际情况中不使用这种方法处理请求
+
+## 3、Selector
+
+### 多路复用
+
+单线程可以配合 Selector 完成对多个 Channel 可读写事件的监控，这称之为多路复用
+
+- **多路复用仅针对网络 IO**，普通文件 IO **无法**利用多路复用
+- 如果不用 Selector 的非阻塞模式，线程大部分时间都在做无用功，而 Selector 能够保证
+  - 有可连接事件时才去连接
+  - 有可读事件才去读取
+  - 有可写事件才去写入
+    - 限于网络传输能力，Channel 未必时时可写，一旦 Channel 可写，会触发 Selector 的可写事件
+
+## 4、使用及Accpet事件
+
+要使用Selector实现多路复用，服务端代码如下改进
