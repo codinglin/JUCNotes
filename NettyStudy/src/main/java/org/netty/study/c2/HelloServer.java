@@ -1,4 +1,4 @@
-package org.netty.study.c1;
+package org.netty.study.c2;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelHandlerContext;

@@ -5,19 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/App.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/HelloClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/HelloServer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/resources/logback.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/test/java/org/netty/study/AppTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" beforeDir="false" afterPath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/EventLoopServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestEventLoop.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/HelloClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c2/HelloClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/HelloServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c2/HelloServer.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,11 +78,11 @@
       </method>
     </configuration>
     <configuration name="HelloClient" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="org.netty.study.c1.HelloClient" />
+      <option name="MAIN_CLASS_NAME" value="org.netty.study.c2.HelloClient" />
       <module name="NettyStudy" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="org.netty.study.c1.*" />
+          <option name="PATTERN" value="org.netty.study.c2.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -99,11 +91,11 @@
       </method>
     </configuration>
     <configuration name="HelloServer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
-      <option name="MAIN_CLASS_NAME" value="org.netty.study.c1.HelloServer" />
+      <option name="MAIN_CLASS_NAME" value="org.netty.study.c2.HelloServer" />
       <module name="NettyStudy" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="org.netty.study.c1.*" />
+          <option name="PATTERN" value="org.netty.study.c2.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
@@ -128,7 +120,7 @@
       <option name="presentableId" value="Default" />
       <updated>1671722393937</updated>
       <workItem from="1671722395199" duration="3829000" />
-      <workItem from="1671770171254" duration="1839000" />
+      <workItem from="1671770171254" duration="5582000" />
     </task>
     <servers />
   </component>
