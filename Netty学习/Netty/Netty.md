@@ -162,3 +162,291 @@ EventLoopGroup 是一组 EventLoop，Channel 一般会调用 EventLoopGroup 的 
   - 另有 next 方法获取集合中下一个 EventLoop
 
 ### 处理普通与定时任务
+
+```java
+public class TestEventLoop {
+    public static void main(String[] args) {
+        // 创建拥有两个EventLoop的NioEventLoopGroup，对应两个线程
+        EventLoopGroup group = new NioEventLoopGroup(2);
+        // 通过next方法可以获得下一个 EventLoop
+        System.out.println(group.next());
+        System.out.println(group.next());
+
+        // 通过EventLoop执行普通任务
+        group.next().execute(()->{
+            System.out.println(Thread.currentThread().getName() + " hello");
+        });
+
+        // 通过EventLoop执行定时任务
+        group.next().scheduleAtFixedRate(()->{
+            System.out.println(Thread.currentThread().getName() + " hello2");
+        }, 0, 1, TimeUnit.SECONDS);
+        
+        // 优雅地关闭
+        group.shutdownGracefully();
+    }
+}
+```
+
+**关闭 EventLoopGroup**
+
+优雅关闭 `shutdownGracefully` 方法。该方法会首先切换 `EventLoopGroup` 到关闭状态从而拒绝新的任务的加入，然后在任务队列的任务都处理完成后，停止线程的运行。从而确保整体应用是在正常有序的状态下退出的
+
+### 处理IO任务
+
+#### 服务器代码
+
+```java
+public class MyServer {
+    public static void main(String[] args) {
+        new ServerBootstrap()
+                .group(new NioEventLoopGroup())
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        socketChannel.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                            @Override
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                ByteBuf buf = (ByteBuf) msg;
+                                System.out.println(Thread.currentThread().getName() + " " + buf.toString(StandardCharsets.UTF_8));
+
+                            }
+                        });
+                    }
+                })
+                .bind(8080);
+    }
+}
+```
+
+#### 客户端代码
+
+```java
+public class MyClient {
+    public static void main(String[] args) throws IOException, InterruptedException {
+        Channel channel = new Bootstrap()
+                .group(new NioEventLoopGroup())
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        socketChannel.pipeline().addLast(new StringEncoder());
+                    }
+                })
+                .connect(new InetSocketAddress("localhost", 8080))
+                .sync()
+                .channel();
+        System.out.println(channel);
+        // 此处打断点调试，调用 channel.writeAndFlush(...);
+        System.in.read();
+    }
+}
+```
+
+### 分工
+
+Bootstrap的group()方法**可以传入两个EventLoopGroup参数**，分别负责处理不同的事件
+
+```java
+public class MyServer {
+    public static void main(String[] args) {
+        new ServerBootstrap()
+            	// 两个Group，分别为Boss 负责Accept事件，Worker 负责读写事件
+                .group(new NioEventLoopGroup(1), new NioEventLoopGroup(2))
+            
+				...
+    }
+}
+```
+
+一个EventLoop可以**负责多个**Channel，且EventLoop一旦与Channel绑定，则**一直负责**处理该Channel中的事件
+
+<img src="Netty.assets/image-20221228205517748.png" alt="image-20221228205517748" style="zoom:67%;" />
+
+#### 增加自定义EventLoopGroup
+
+当有的**任务需要较长的时间处理时，可以使用非NioEventLoopGroup**，避免同一个NioEventLoop中的其他Channel在较长的时间内都无法得到处理
+
+```java
+public class MyServer {
+    public static void main(String[] args) {
+        // 增加自定义的非NioEventLoopGroup
+        EventLoopGroup group = new DefaultEventLoopGroup();
+        
+        new ServerBootstrap()
+                .group(new NioEventLoopGroup(1), new NioEventLoopGroup(2))
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        // 增加两个handler，第一个使用NioEventLoopGroup处理，第二个使用自定义EventLoopGroup处理
+                        socketChannel.pipeline().addLast("nioHandler",new ChannelInboundHandlerAdapter() {
+                            @Override
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                ByteBuf buf = (ByteBuf) msg;
+                                System.out.println(Thread.currentThread().getName() + " " + buf.toString(StandardCharsets.UTF_8));
+                                // 调用下一个handler
+                                ctx.fireChannelRead(msg);
+                            }
+                        })
+                        // 该handler绑定自定义的Group
+                        .addLast(group, "myHandler", new ChannelInboundHandlerAdapter() {
+                            @Override
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                ByteBuf buf = (ByteBuf) msg;
+                                System.out.println(Thread.currentThread().getName() + " " + buf.toString(StandardCharsets.UTF_8));
+                            }
+                        });
+                    }
+                })
+                .bind(8080);
+    }
+}
+```
+
+客户端与服务器之间的事件，被nioEventLoopGroup和defaultEventLoopGroup分别处理
+
+<img src="Netty.assets/image-20221228205646076.png" alt="image-20221228205646076" style="zoom:67%;" />
+
+## 2、Channel
+
+Channel 的常用方法
+
+- close() 可以用来关闭Channel
+- closeFuture() 用来处理 Channel 的关闭
+  - sync 方法作用是同步等待 Channel 关闭
+  - 而 addListener 方法是异步等待 Channel 关闭
+- pipeline() 方法用于添加处理器
+- write() 方法将数据写入
+  - 因为缓冲机制，数据被写入到 Channel 中以后，不会立即被发送
+  - **只有当缓冲满了或者调用了flush()方法后**，才会将数据通过 Channel 发送出去
+- writeAndFlush() 方法将数据写入并**立即发送（刷出）**
+
+### ChannelFuture
+
+#### 连接问题
+
+**拆分客户端代码**
+
+```java
+public class MyClient {
+    public static void main(String[] args) throws IOException, InterruptedException {
+        ChannelFuture channelFuture = new Bootstrap()
+                .group(new NioEventLoopGroup())
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        socketChannel.pipeline().addLast(new StringEncoder());
+                    }
+                })
+                // 该方法为异步非阻塞方法，主线程调用后不会被阻塞，真正去执行连接操作的是NIO线程
+            	// NIO线程：NioEventLoop 中的线程
+                .connect(new InetSocketAddress("localhost", 8080));
+        
+        // 该方法用于等待连接真正建立
+        channelFuture.sync();
+        
+        // 获取客户端-服务器之间的Channel对象
+        Channel channel = channelFuture.channel();
+        channel.writeAndFlush("hello world");
+        System.in.read();
+    }
+}
+```
+
+如果我们去掉`channelFuture.sync()`方法，会服务器无法收到`hello world`
+
+这是因为建立连接(connect)的过程是**异步非阻塞**的，若不通过`sync()`方法阻塞主线程，等待连接真正建立，这时通过 channelFuture.channel() **拿到的 Channel 对象，并不是真正与服务器建立好连接的 Channel**，也就没法将信息正确的传输给服务器端
+
+所以需要通过`channelFuture.sync()`方法，阻塞主线程，**同步处理结果**，等待连接真正建立好以后，再去获得 Channel 传递数据。使用该方法，获取 Channel 和发送数据的线程**都是主线程**
+
+下面还有一种方法，用于**异步**获取建立连接后的 Channel 和发送数据，使得执行这些操作的线程是 NIO 线程（去执行connect操作的线程）
+
+**addListener方法**
+
+通过这种方法可以**在NIO线程中获取 Channel 并发送数据**，而不是在主线程中执行这些操作
+
+```java
+public class MyClient {
+    public static void main(String[] args) throws IOException, InterruptedException {
+        ChannelFuture channelFuture = new Bootstrap()
+                .group(new NioEventLoopGroup())
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        socketChannel.pipeline().addLast(new StringEncoder());
+                    }
+                })
+                // 该方法为异步非阻塞方法，主线程调用后不会被阻塞，真正去执行连接操作的是NIO线程
+                // NIO线程：NioEventLoop 中的线程
+                .connect(new InetSocketAddress("localhost", 8080));
+        
+		// 当connect方法执行完毕后，也就是连接真正建立后
+        // 会在NIO线程中调用operationComplete方法
+        channelFuture.addListener(new ChannelFutureListener() {
+            @Override
+            public void operationComplete(ChannelFuture channelFuture) throws Exception {
+                Channel channel = channelFuture.channel();
+                channel.writeAndFlush("hello world");
+            }
+        });
+        System.in.read();
+    }
+}
+```
+
+#### 处理关闭
+
+```java
+public class ReadClient {
+    public static void main(String[] args) throws InterruptedException {
+        // 创建EventLoopGroup，使用完毕后关闭
+        NioEventLoopGroup group = new NioEventLoopGroup();
+        
+        ChannelFuture channelFuture = new Bootstrap()
+                .group(group)
+                .channel(NioSocketChannel.class)
+                .handler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        socketChannel.pipeline().addLast(new StringEncoder());
+                    }
+                })
+                .connect(new InetSocketAddress("localhost", 8080));
+        channelFuture.sync();
+
+        Channel channel = channelFuture.channel();
+        Scanner scanner = new Scanner(System.in);
+
+        // 创建一个线程用于输入并向服务器发送
+        new Thread(()->{
+            while (true) {
+                String msg = scanner.next();
+                if ("q".equals(msg)) {
+                    // 关闭操作是异步的，在NIO线程中执行
+                    channel.close();
+                    break;
+                }
+                channel.writeAndFlush(msg);
+            }
+        }, "inputThread").start();
+
+        // 获得closeFuture对象
+        ChannelFuture closeFuture = channel.closeFuture();
+        System.out.println("waiting close...");
+        
+        // 同步等待NIO线程执行完close操作
+        closeFuture.sync();
+        
+        // 关闭之后执行一些操作，可以保证执行的操作一定是在channel关闭以后执行的
+        System.out.println("关闭之后执行一些额外操作...");
+        
+        // 关闭EventLoopGroup
+        group.shutdownGracefully();
+    }
+}
+```
+

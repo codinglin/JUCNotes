@@ -5,11 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/EventLoopServer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestEventLoop.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/CloseFutureClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/EventLoopClient.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/HelloClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c2/HelloClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/HelloServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c2/HelloServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/EventLoopServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/EventLoopServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" beforeDir="false" afterPath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,6 +61,9 @@
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\GitHubProject\JUCNotes\NettyStudy" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="org.netty.study.c3" />
     </key>
   </component>
   <component name="RunManager" selected="Application.HelloClient">
@@ -121,6 +124,7 @@
       <updated>1671722393937</updated>
       <workItem from="1671722395199" duration="3829000" />
       <workItem from="1671770171254" duration="5582000" />
+      <workItem from="1672212631774" duration="5650000" />
     </task>
     <servers />
   </component>
