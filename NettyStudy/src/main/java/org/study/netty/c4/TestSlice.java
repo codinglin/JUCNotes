@@ -1,9 +1,9 @@
-package org.netty.study.c4;
+package org.study.netty.c4;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 
-import static org.netty.study.c4.TestByteBuf.log;
+import static org.study.netty.c4.TestByteBuf.log;
 
 public class TestSlice {
     public static void main(String[] args) {

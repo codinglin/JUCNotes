@@ -1115,7 +1115,7 @@ read index:0 write index:5 capacity:5
 
 ```java
 public class HelloServer {
-    static final Logger log = LoggerFactory.getLogger(StudyServer.class);
+    static final Logger log = LoggerFactory.getLogger(HelloServer.class);
     void start() {
         NioEventLoopGroup boss = new NioEventLoopGroup(1);
         NioEventLoopGroup worker = new NioEventLoopGroup();
@@ -1160,7 +1160,7 @@ public class HelloServer {
     }
 
     public static void main(String[] args) {
-        new StudyServer().start();
+        new HelloServer().start();
     }
 }
 ```
@@ -1171,7 +1171,7 @@ public class HelloServer {
 
 ```java
 public class HelloClient {
-    static final Logger log = LoggerFactory.getLogger(StudyClient.class);
+    static final Logger log = LoggerFactory.getLogger(HelloClient.class);
     public static void main(String[] args) {
         NioEventLoopGroup worker = new NioEventLoopGroup();
         try {

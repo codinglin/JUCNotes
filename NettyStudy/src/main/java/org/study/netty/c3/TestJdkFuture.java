@@ -1,4 +1,4 @@
-package org.netty.study.c3;
+package org.study.netty.c3;
 
 import lombok.extern.slf4j.Slf4j;
 

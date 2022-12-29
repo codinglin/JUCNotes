@@ -1,4 +1,4 @@
-package org.netty.study.c1;
+package org.study.advance.c1;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;

@@ -1,4 +1,4 @@
-package org.netty.study;
+package org.study.netty;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

@@ -5,15 +5,27 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/TestLengthFieldDecoder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestJdkFuture.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestNettyFuture.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestNettyPromise.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestPipeline.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestByteBuf.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestCompositeByteBuf.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestSlice.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c1/HelloClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c1/HelloServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c2/TestRedis.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/App.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/TestLengthFieldDecoder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c1/TestLengthFieldDecoder.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c2/HelloClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c2/HelloClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c2/HelloServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c2/HelloServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/CloseFutureClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/CloseFutureClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/EventLoopClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/EventLoopClient.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/EventLoopServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/EventLoopServer.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestEventLoop.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestEventLoop.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestJdkFuture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestJdkFuture.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestNettyFuture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestNettyFuture.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestNettyPromise.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestNettyPromise.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestPipeline.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestPipeline.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestByteBuf.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c4/TestByteBuf.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestCompositeByteBuf.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c4/TestCompositeByteBuf.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestSlice.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c4/TestSlice.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/netty/study/AppTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/study/netty/AppTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" beforeDir="false" afterPath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -144,7 +156,7 @@
       <workItem from="1671722395199" duration="3829000" />
       <workItem from="1671770171254" duration="5582000" />
       <workItem from="1672212631774" duration="5650000" />
-      <workItem from="1672289588788" duration="11472000" />
+      <workItem from="1672289588788" duration="11958000" />
     </task>
     <servers />
   </component>

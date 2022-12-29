@@ -1,7 +1,6 @@
-package org.netty.study.c3;
+package org.study.netty.c2;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -9,10 +8,10 @@ import io.netty.handler.codec.string.StringEncoder;
 
 import java.net.InetSocketAddress;
 
-public class EventLoopClient {
+public class HelloClient {
     public static void main(String[] args) throws InterruptedException {
         // 1. 启动器
-        Channel channel = new Bootstrap()
+        new Bootstrap()
                 // 2. 添加 EventLoop
                 .group(new NioEventLoopGroup())
                 // 3. 选择客户端 channel 实现
@@ -27,9 +26,8 @@ public class EventLoopClient {
                 // 5. 连接到服务器
                 .connect(new InetSocketAddress("localhost", 8080))
                 .sync() // 阻塞方法，直到连接建立
-                .channel();// 代表连接对象
+                .channel() // 代表连接对象
                 // 6. 向服务器发送数据
-                // .writeAndFlush("hello, world!");
-        System.out.println(channel);
+                .writeAndFlush("hello, world!");
     }
 }

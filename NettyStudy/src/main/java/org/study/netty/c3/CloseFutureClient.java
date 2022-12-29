@@ -1,4 +1,4 @@
-package org.netty.study.c3;
+package org.study.netty.c3;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
