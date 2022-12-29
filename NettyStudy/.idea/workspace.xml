@@ -5,8 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/TestLengthFieldDecoder.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestJdkFuture.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestNettyFuture.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestNettyPromise.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestPipeline.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestByteBuf.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestCompositeByteBuf.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestSlice.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/CloseFutureClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/CloseFutureClient.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" beforeDir="false" afterPath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -64,7 +71,7 @@
       <recent name="org.netty.study.c3" />
     </key>
   </component>
-  <component name="RunManager" selected="Application.HelloClient">
+  <component name="RunManager" selected="Application.TestByteBuf">
     <configuration name="App" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="org.netty.App" />
       <module name="NettyStudy" />
@@ -104,8 +111,22 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="TestByteBuf" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="org.netty.study.c4.TestByteBuf" />
+      <module name="NettyStudy" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="org.netty.study.c3.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Application.TestByteBuf" />
         <item itemvalue="Application.HelloClient" />
         <item itemvalue="Application.HelloServer" />
         <item itemvalue="Application.App" />
@@ -123,7 +144,7 @@
       <workItem from="1671722395199" duration="3829000" />
       <workItem from="1671770171254" duration="5582000" />
       <workItem from="1672212631774" duration="5650000" />
-      <workItem from="1672289588788" duration="644000" />
+      <workItem from="1672289588788" duration="11472000" />
     </task>
     <servers />
   </component>
