@@ -171,8 +171,6 @@ public class ChatClient {
                                     }
                                 }
 
-
-
                             },"system in").start();
 
 
