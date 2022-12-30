@@ -5,54 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c2/TestHttp.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/config/Config.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/AbstractResponseMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/ChatRequestMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/ChatResponseMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupChatRequestMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupChatResponseMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupCreateRequestMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupCreateResponseMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupJoinRequestMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupJoinResponseMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupMembersRequestMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupMembersResponseMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupQuitRequestMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupQuitResponseMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/LoginRequestMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/LoginResponseMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/Message.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/PingMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/PongMessage.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/protocol/MessageCodecSharable.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/protocol/MySerializer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/protocol/ProtocolFrameDecoder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/ChatServer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/ChatRequestMessageHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/GroupChatRequestMessageHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/GroupCreateRequestMessageHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/LoginRequestMessageHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/QuitHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/service/UserService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/service/UserServiceFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/service/UserServiceMemoryImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/Group.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/GroupSession.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/GroupSessionFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/GroupSessionMemoryImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/Session.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/SessionFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/SessionMemoryImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/OnlyTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/TestAlgorithm.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/TestBacklogServer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/TestConnectionTimeout.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/TestMessageCodec.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/聊天业务.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/client/ChatClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/utils/ByteBufferUtil.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/advance/c2/TestRedis.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c2/TestRedis.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" beforeDir="false" afterPath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -95,7 +50,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "D:/GitHubProject/JUCNotes/NettyStudy/src/main/java/org/study/asm/server",
+    "last_opened_file_path": "D:/GitHubProject/JUCNotes/NettyStudy/src/main/java/org/study/asm",
     "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.0",
@@ -104,10 +59,10 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm" />
       <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\server" />
       <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\test" />
       <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\config" />
-      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm" />
       <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\protocol" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
@@ -188,7 +143,7 @@
       <workItem from="1671770171254" duration="5582000" />
       <workItem from="1672212631774" duration="5650000" />
       <workItem from="1672289588788" duration="12669000" />
-      <workItem from="1672374881743" duration="6654000" />
+      <workItem from="1672374881743" duration="8345000" />
     </task>
     <servers />
   </component>

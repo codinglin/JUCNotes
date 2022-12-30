@@ -1862,3 +1862,226 @@ public class TestHttp {
 
 服务器负责处理请求并响应浏览器。所以**只需要处理HTTP请求**即可
 
+```java
+// 服务器只处理HTTPRequest
+ch.pipeline().addLast(new SimpleChannelInboundHandler<HttpRequest>()
+```
+
+获得请求后，需要返回响应给浏览器。需要创建响应对象`DefaultFullHttpResponse`，设置HTTP版本号及状态码，为避免浏览器获得响应后，因为获得`CONTENT_LENGTH`而一直空转，需要添加`CONTENT_LENGTH`字段，表明响应体中数据的具体长度
+
+```java
+// 获得完整响应，设置版本号与状态码
+DefaultFullHttpResponse response = new DefaultFullHttpResponse(msg.protocolVersion(), HttpResponseStatus.OK);
+// 设置响应内容
+byte[] bytes = "<h1>Hello, World!</h1>".getBytes(StandardCharsets.UTF_8);
+// 设置响应体长度，避免浏览器一直接收响应内容
+response.headers().setInt(CONTENT_LENGTH, bytes.length);
+// 设置响应体
+response.content().writeBytes(bytes);
+```
+
+### 自定义协议
+
+#### 组成要素
+
+- **魔数**：用来在第一时间判定接收的数据是否为无效数据包
+
+- **版本号**：可以支持协议的升级
+
+- 序列化算法
+
+  ：消息正文到底采用哪种序列化反序列化方式
+
+  - 如：json、protobuf、hessian、jdk
+
+- **指令类型**：是登录、注册、单聊、群聊… 跟业务相关
+
+- **请求序号**：为了双工通信，提供异步能力
+
+- **正文长度**
+
+- **消息正文**
+
+#### 编码器与解码器
+
+```java
+public class MessageCodec extends ByteToMessageCodec<Message> {
+
+    @Override
+    protected void encode(ChannelHandlerContext ctx, Message msg, ByteBuf out) throws Exception {
+        // 设置魔数 4个字节
+        out.writeBytes(new byte[]{'N','Y','I','M'});
+        // 设置版本号 1个字节
+        out.writeByte(1);
+        // 设置序列化方式 1个字节
+        out.writeByte(1);
+        // 设置指令类型 1个字节
+        out.writeByte(msg.getMessageType());
+        // 设置请求序号 4个字节
+        out.writeInt(msg.getSequenceId());
+        // 为了补齐为16个字节，填充1个字节的数据
+        out.writeByte(0xff);
+
+        // 获得序列化后的msg
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(msg);
+        byte[] bytes = bos.toByteArray();
+
+        // 获得并设置正文长度 长度用4个字节标识
+        out.writeInt(bytes.length);
+        // 设置消息正文
+        out.writeBytes(bytes);
+    }
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        // 获取魔数
+        int magic = in.readInt();
+        // 获取版本号
+        byte version = in.readByte();
+        // 获得序列化方式
+        byte seqType = in.readByte();
+        // 获得指令类型
+        byte messageType = in.readByte();
+        // 获得请求序号
+        int sequenceId = in.readInt();
+        // 移除补齐字节
+        in.readByte();
+        // 获得正文长度
+        int length = in.readInt();
+        // 获得正文
+        byte[] bytes = new byte[length];
+        in.readBytes(bytes, 0, length);
+        ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
+        Message message = (Message) ois.readObject();
+		// 将信息放入List中，传递给下一个handler
+        out.add(message);
+        
+        // 打印获得的信息正文
+        System.out.println("===========魔数===========");
+        System.out.println(magic);
+        System.out.println("===========版本号===========");
+        System.out.println(version);
+        System.out.println("===========序列化方法===========");
+        System.out.println(seqType);
+        System.out.println("===========指令类型===========");
+        System.out.println(messageType);
+        System.out.println("===========请求序号===========");
+        System.out.println(sequenceId);
+        System.out.println("===========正文长度===========");
+        System.out.println(length);
+        System.out.println("===========正文===========");
+        System.out.println(message);
+    }
+}
+```
+
+- 编码器与解码器方法源于**父类ByteToMessageCodec**，通过该类可以自定义编码器与解码器，**泛型类型为被编码与被解码的类**。此处使用了自定义类Message，代表消息
+
+  ```java
+  public class MessageCodec extends ByteToMessageCodec<Message>
+  ```
+
+- 编码器**负责将附加信息与正文信息写入到ByteBuf中**，其中附加信息**总字节数最好为2n，不足需要补齐**。正文内容如果为对象，需要通过**序列化**将其放入到ByteBuf中
+
+- 解码器**负责将ByteBuf中的信息取出，并放入List中**，该List用于将信息传递给下一个handler
+
+**编写测试类**
+
+```java
+public class TestCodec {
+    static final org.slf4j.Logger log = LoggerFactory.getLogger(StudyServer.class);
+    public static void main(String[] args) throws Exception {
+        EmbeddedChannel channel = new EmbeddedChannel();
+        // 添加解码器，避免粘包半包问题
+        channel.pipeline().addLast(new LengthFieldBasedFrameDecoder(1024, 12, 4, 0, 0));
+        channel.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
+        channel.pipeline().addLast(new MessageCodec());
+        LoginRequestMessage user = new LoginRequestMessage("Nyima", "123");
+
+        // 测试编码与解码
+        ByteBuf byteBuf = ByteBufAllocator.DEFAULT.buffer();
+        new MessageCodec().encode(null, user, byteBuf);
+        channel.writeInbound(byteBuf);
+    }
+}
+```
+
+- 测试类中用到了LengthFieldBasedFrameDecoder，避免粘包半包问题
+- 通过MessageCodec的encode方法将附加信息与正文写入到ByteBuf中，通过channel执行入站操作。入站时会调用decode方法进行解码
+
+运行结果
+
+<img src="Netty.assets/image-20221230152040850.png" alt="image-20221230152040850" style="zoom:50%;" />
+
+#### @Sharable注解
+
+为了**提高handler的复用率，可以将handler创建为handler对象**，然后在不同的channel中使用该handler对象进行处理操作
+
+```java
+LoggingHandler loggingHandler = new LoggingHandler(LogLevel.DEBUG);
+// 不同的channel中使用同一个handler对象，提高复用率
+channel1.pipeline().addLast(loggingHandler);
+channel2.pipeline().addLast(loggingHandler);
+```
+
+但是**并不是所有的handler都能通过这种方法来提高复用率的**，例如`LengthFieldBasedFrameDecoder`。如果多个channel中使用同一个LengthFieldBasedFrameDecoder对象，则可能发生如下问题
+
+- channel1中收到了一个半包，LengthFieldBasedFrameDecoder发现不是一条完整的数据，则没有继续向下传播
+- 此时channel2中也收到了一个半包，**因为两个channel使用了同一个LengthFieldBasedFrameDecoder，存入其中的数据刚好拼凑成了一个完整的数据包**。LengthFieldBasedFrameDecoder让该数据包继续向下传播，**最终引发错误**
+
+为了提高handler的复用率，同时又避免出现一些并发问题，**Netty中原生的handler中用`@Sharable`注解来标明，该handler能否在多个channel中共享。**
+
+**只有带有该注解，才能通过对象的方式被共享**，否则无法被共享
+
+#### **自定义编解码器能否使用@Sharable注解**
+
+**这需要根据自定义的handler的处理逻辑进行分析**
+
+我们的MessageCodec本身接收的是LengthFieldBasedFrameDecoder处理之后的数据，那么数据肯定是完整的，按分析来说是可以添加@Sharable注解的
+
+但是实际情况我们并**不能**添加该注解，会抛出异常信息`ChannelHandler cn.nyimac.study.day8.protocol.MessageCodec is not allowed to be shared`
+
+- 因为MessageCodec**继承自ByteToMessageCodec**，ByteToMessageCodec类的注解如下
+
+<img src="Netty.assets/image-20221230152122636.png" alt="image-20221230152122636" style="zoom:50%;" />
+
+- 这就意味着**ByteToMessageCodec不能被多个channel所共享的**
+  - 原因：**因为该类的目标是：将ByteBuf转化为Message，意味着传进该handler的数据还未被处理过**。所以传过来的ByteBuf**可能并不是完整的数据**，如果共享则会出现问题
+
+**如果想要共享，需要怎么办呢？**
+
+继承**MessageToMessageDecoder**即可。**该类的目标是：将已经被处理的完整数据再次被处理。**传过来的Message**如果是被处理过的完整数据**，那么被共享也就不会出现问题了，也就可以使用@Sharable注解了。实现方式与ByteToMessageCodec类似
+
+```java
+@ChannelHandler.Sharable
+public class MessageSharableCodec extends MessageToMessageCodec<ByteBuf, Message> {
+    @Override
+    protected void encode(ChannelHandlerContext ctx, Message msg, List<Object> out) throws Exception {
+        ...
+    }
+
+    @Override
+    protected void decode(ChannelHandlerContext ctx, ByteBuf msg, List<Object> out) throws Exception {
+		...
+    }
+}
+```
+
+## 3、在线聊天室
+
+见工程中的项目，org.study.asm包下
+
+#### 整体结构
+
+<img src="Netty.assets/image-20221230152310163.png" alt="image-20221230152310163" style="zoom:80%;float:left" />
+
+<img src="Netty.assets/image-20221230152404239.png" alt="image-20221230152404239" style="zoom:80%;float:left" />
+
+- client包：存放客户端相关类
+- message包：存放各种类型的消息
+- protocol包：存放自定义协议
+- server包：存放服务器相关类
+  - service包：存放用户相关类
+  - session包：单聊及群聊相关会话类
