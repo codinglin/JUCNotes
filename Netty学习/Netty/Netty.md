@@ -1720,3 +1720,145 @@ TCP/IP 中消息传输基于流的方式，没有边界
 ### Redis协议
 
 如果我们要向Redis服务器发送一条`set name Nyima`的指令，需要遵守如下协议
+
+```java
+// 该指令一共有3部分，每条指令之后都要添加回车与换行符
+*3\r\n
+// 第一个指令的长度是3
+$3\r\n
+// 第一个指令是set指令
+set\r\n
+// 下面的指令以此类推
+$4\r\n
+name\r\n
+$5\r\n
+Nyima\r\n
+```
+
+**客户端代码如下**
+
+```java
+public class TestRedis {
+    public static void main(String[] args) {
+        NioEventLoopGroup group =  new NioEventLoopGroup();
+        try {
+            ChannelFuture channelFuture = new Bootstrap()
+                    .group(group)
+                    .channel(NioSocketChannel.class)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) {
+                            // 打印日志
+                            ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
+                            ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                                @Override
+                                public void channelActive(ChannelHandlerContext ctx) throws Exception {
+                                    // 回车与换行符
+                                    final byte[] LINE = {'\r','\n'};
+                                    // 获得ByteBuf
+                                    ByteBuf buffer = ctx.alloc().buffer();
+                                    // 连接建立后，向Redis中发送一条指令，注意添加回车与换行
+                                    // set name Nyima
+                                    buffer.writeBytes("*3".getBytes());
+                                    buffer.writeBytes(LINE);
+                                    buffer.writeBytes("$3".getBytes());
+                                    buffer.writeBytes(LINE);
+                                    buffer.writeBytes("set".getBytes());
+                                    buffer.writeBytes(LINE);
+                                    buffer.writeBytes("$4".getBytes());
+                                    buffer.writeBytes(LINE);
+                                    buffer.writeBytes("name".getBytes());
+                                    buffer.writeBytes(LINE);
+                                    buffer.writeBytes("$5".getBytes());
+                                    buffer.writeBytes(LINE);
+                                    buffer.writeBytes("Nyima".getBytes());
+                                    buffer.writeBytes(LINE);
+                                    ctx.writeAndFlush(buffer);
+                                }
+
+                            });
+                        }
+                    })
+                    .connect(new InetSocketAddress("localhost", 6379));
+            channelFuture.sync();
+            // 关闭channel
+            channelFuture.channel().close().sync();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            // 关闭group
+            group.shutdownGracefully();
+        }
+    }
+}
+```
+
+**控制台打印结果**
+
+```java
+1600 [nioEventLoopGroup-2-1] DEBUG io.netty.handler.logging.LoggingHandler  - [id: 0x28c994f1, L:/127.0.0.1:60792 - R:localhost/127.0.0.1:6379] WRITE: 34B
+         +-------------------------------------------------+
+         |  0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f |
++--------+-------------------------------------------------+----------------+
+|00000000| 2a 33 0d 0a 24 33 0d 0a 73 65 74 0d 0a 24 34 0d |*3..$3..set..$4.|
+|00000010| 0a 6e 61 6d 65 0d 0a 24 35 0d 0a 4e 79 69 6d 61 |.name..$5..Nyima|
+|00000020| 0d 0a                                           |..              |
++--------+-------------------------------------------------+----------------+
+```
+
+### HTTP协议
+
+HTTP协议在请求行请求头中都有很多的内容，自己实现较为困难，可以使用`HttpServerCodec`作为**服务器端的解码器与编码器，来处理HTTP请求**
+
+```java
+// HttpServerCodec 中既有请求的解码器 HttpRequestDecoder 又有响应的编码器 HttpResponseEncoder
+// Codec(CodeCombine) 一般代表该类既作为 编码器 又作为 解码器
+public final class HttpServerCodec extends CombinedChannelDuplexHandler<HttpRequestDecoder, HttpResponseEncoder>
+        implements HttpServerUpgradeHandler.SourceCodec
+```
+
+**服务器代码**
+
+```java
+@Slf4j
+public class TestHttp {
+    public static void main(String[] args) {
+        NioEventLoopGroup group = new NioEventLoopGroup();
+        new ServerBootstrap()
+                .group(group)
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel ch) {
+                        ch.pipeline().addLast(new LoggingHandler(LogLevel.DEBUG));
+                        // 作为服务器，使用 HttpServerCodec 作为编码器与解码器
+                        ch.pipeline().addLast(new HttpServerCodec());
+                        // 服务器只处理HTTPRequest
+                        ch.pipeline().addLast(new SimpleChannelInboundHandler<HttpRequest>() {
+                            @Override
+                            protected void channelRead0(ChannelHandlerContext ctx, HttpRequest msg) {
+                                // 获得请求uri
+                                log.debug(msg.uri());
+
+                                // 获得完整响应，设置版本号与状态码
+                                DefaultFullHttpResponse response = new DefaultFullHttpResponse(msg.protocolVersion(), HttpResponseStatus.OK);
+                                // 设置响应内容
+                                byte[] bytes = "<h1>Hello, World!</h1>".getBytes(StandardCharsets.UTF_8);
+                                // 设置响应体长度，避免浏览器一直接收响应内容
+                                response.headers().setInt(CONTENT_LENGTH, bytes.length);
+                                // 设置响应体
+                                response.content().writeBytes(bytes);
+
+                                // 写回响应
+                                ctx.writeAndFlush(response);
+                            }
+                        });
+                    }
+                })
+                .bind(8080);
+    }
+}
+```
+
+服务器负责处理请求并响应浏览器。所以**只需要处理HTTP请求**即可
+

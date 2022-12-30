@@ -5,27 +5,54 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c1/HelloClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c1/HelloServer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c2/TestRedis.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c2/TestHttp.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/config/Config.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/AbstractResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/ChatRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/ChatResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupChatRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupChatResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupCreateRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupCreateResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupJoinRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupJoinResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupMembersRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupMembersResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupQuitRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupQuitResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/LoginRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/LoginResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/Message.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/PingMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/PongMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/protocol/MessageCodecSharable.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/protocol/MySerializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/protocol/ProtocolFrameDecoder.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/ChatServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/ChatRequestMessageHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/GroupChatRequestMessageHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/GroupCreateRequestMessageHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/LoginRequestMessageHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/handler/QuitHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/service/UserService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/service/UserServiceFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/service/UserServiceMemoryImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/Group.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/GroupSession.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/GroupSessionFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/GroupSessionMemoryImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/Session.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/SessionFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/server/session/SessionMemoryImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/OnlyTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/TestAlgorithm.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/TestBacklogServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/TestConnectionTimeout.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/test/TestMessageCodec.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/聊天业务.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/App.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c1/TestLengthFieldDecoder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c1/TestLengthFieldDecoder.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c2/HelloClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c2/HelloClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c2/HelloServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c2/HelloServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/CloseFutureClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/CloseFutureClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/EventLoopClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/EventLoopClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/EventLoopServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/EventLoopServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestEventLoop.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestEventLoop.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestJdkFuture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestJdkFuture.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestNettyFuture.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestNettyFuture.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestNettyPromise.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestNettyPromise.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c3/TestPipeline.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c3/TestPipeline.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestByteBuf.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c4/TestByteBuf.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestCompositeByteBuf.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c4/TestCompositeByteBuf.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/netty/study/c4/TestSlice.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/netty/c4/TestSlice.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/org/netty/study/AppTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/study/netty/AppTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/advance/c2/TestRedis.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/advance/c2/TestRedis.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" beforeDir="false" afterPath="$PROJECT_DIR$/../Netty学习/Netty/Netty.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -62,22 +89,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/GitHubProject/JUCNotes/NettyStudy&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.build&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "last_opened_file_path": "D:/GitHubProject/JUCNotes/NettyStudy/src/main/java/org/study/asm/server",
+    "project.structure.last.edited": "Modules",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "configurable.group.build"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\GitHubProject\JUCNotes\NettyStudy" />
+      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\server" />
+      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\test" />
+      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\config" />
+      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm" />
+      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\protocol" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="org.netty.study.c3" />
@@ -156,7 +187,8 @@
       <workItem from="1671722395199" duration="3829000" />
       <workItem from="1671770171254" duration="5582000" />
       <workItem from="1672212631774" duration="5650000" />
-      <workItem from="1672289588788" duration="11958000" />
+      <workItem from="1672289588788" duration="12669000" />
+      <workItem from="1672374881743" duration="6654000" />
     </task>
     <servers />
   </component>
