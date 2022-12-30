@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/client/ChatClient.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/client/ChatClient.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/Message.java" afterDir="false" />
-    </list>
+    <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -143,7 +138,7 @@
       <workItem from="1671770171254" duration="5582000" />
       <workItem from="1672212631774" duration="5650000" />
       <workItem from="1672289588788" duration="12669000" />
-      <workItem from="1672374881743" duration="13789000" />
+      <workItem from="1672374881743" duration="14401000" />
     </task>
     <servers />
   </component>
