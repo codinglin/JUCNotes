@@ -1,4 +1,4 @@
-package org.study.asm.message;
+package org.study.rpc.message;
 
 public class PongMessage extends Message {
     @Override

@@ -1,4 +1,4 @@
-package org.study.asm.message;
+package org.study.rpc.message;
 
 import lombok.Data;
 import lombok.ToString;

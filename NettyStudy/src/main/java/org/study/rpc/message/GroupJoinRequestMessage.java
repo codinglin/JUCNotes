@@ -1,22 +1,22 @@
-package org.study.asm.message;
+package org.study.rpc.message;
 
 import lombok.Data;
 import lombok.ToString;
 
 @Data
 @ToString(callSuper = true)
-public class GroupQuitRequestMessage extends Message {
+public class GroupJoinRequestMessage extends Message {
     private String groupName;
 
     private String username;
 
-    public GroupQuitRequestMessage(String username, String groupName) {
+    public GroupJoinRequestMessage(String username, String groupName) {
         this.groupName = groupName;
         this.username = username;
     }
 
     @Override
     public int getMessageType() {
-        return Message.GroupQuitRequestMessage;
+        return Message.GroupJoinRequestMessage;
     }
 }

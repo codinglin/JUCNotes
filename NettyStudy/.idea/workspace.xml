@@ -4,7 +4,66 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="" />
+    <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/client/ChatClient.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/config/Config.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/AbstractResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/ChatRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/ChatResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupChatRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupChatResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupCreateRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupCreateResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupJoinRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupJoinResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupMembersRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupMembersResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupQuitRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupQuitResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/LoginRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/LoginResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/Message.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/PingMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/PongMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/RpcRequestMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/RpcResponseMessage.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/protocol/MessageCodecSharable.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/protocol/MySerializer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/protocol/ProtocolFrameDecoder.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/ChatServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/ChatRequestMessageHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/GroupChatRequestMessageHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/GroupCreateRequestMessageHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/LoginRequestMessageHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/QuitHandler.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/UserService.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/UserServiceFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/UserServiceMemoryImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/Group.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/GroupSession.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/GroupSessionFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/GroupSessionMemoryImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/Session.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/SessionFactory.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/SessionMemoryImpl.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/OnlyTest.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/TestAlgorithm.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/TestBacklogServer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/TestConnectionTimeout.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/TestMessageCodec.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/utils/ByteBufferUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupJoinRequestMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupJoinRequestMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupJoinResponseMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupJoinResponseMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupMembersRequestMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupMembersRequestMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupMembersResponseMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupMembersResponseMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupQuitRequestMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupQuitRequestMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupQuitResponseMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/GroupQuitResponseMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/LoginRequestMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/LoginRequestMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/LoginResponseMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/LoginResponseMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/message/PongMessage.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/message/PongMessage.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/asm/utils/ByteBufferUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/asm/utils/ByteBufferUtil.java" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -45,7 +104,7 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "D:/GitHubProject/JUCNotes/NettyStudy/src/main/java/org/study/asm",
+    "last_opened_file_path": "D:/GitHubProject/JUCNotes/NettyStudy/src/main/java/org/study/rpc/message",
     "project.structure.last.edited": "Modules",
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.0",
@@ -54,11 +113,14 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\rpc\message" />
+      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\rpc" />
       <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm" />
       <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\server" />
       <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\test" />
-      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\config" />
-      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\asm\protocol" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study" />
     </key>
     <key name="CopyClassDialog.RECENTS_KEY">
       <recent name="org.netty.study.c3" />
@@ -138,7 +200,7 @@
       <workItem from="1671770171254" duration="5582000" />
       <workItem from="1672212631774" duration="5650000" />
       <workItem from="1672289588788" duration="12669000" />
-      <workItem from="1672374881743" duration="14401000" />
+      <workItem from="1672374881743" duration="14950000" />
     </task>
     <servers />
   </component>

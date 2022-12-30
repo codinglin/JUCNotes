@@ -1,11 +1,8 @@
-package org.study.asm.utils;
+package org.study.rpc.utils;
 
 import io.netty.util.internal.StringUtil;
 
 import java.nio.ByteBuffer;
-
-import static io.netty.util.internal.MathUtil.isOutOfBounds;
-import static io.netty.util.internal.StringUtil.NEWLINE;
 
 public class ByteBufferUtil {
 
