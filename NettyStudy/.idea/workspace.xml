@@ -5,61 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a21fc69-5c42-4232-9451-b62106936ec9" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/client/RpcClient.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/client/RpcClientPlus.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/handler/RpcRequestMessageHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/handler/RpcResponseMessageHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/protocol/SequenceIdGenerator.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/RpcServer.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/TestJson.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/HelloService.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/HelloServiceImpl.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/HelloServiceImpl2.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/ServiceFactory.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/Client.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/Server.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/client/ChatClient.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/AbstractResponseMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/ChatRequestMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/ChatResponseMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupChatRequestMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupChatResponseMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupCreateRequestMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupCreateResponseMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupJoinRequestMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupJoinResponseMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupMembersRequestMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupMembersResponseMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupQuitRequestMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/GroupQuitResponseMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/LoginRequestMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/LoginResponseMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/Message.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/Message.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/PingMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/message/PongMessage.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/ChatServer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/ChatRequestMessageHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/GroupChatRequestMessageHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/GroupCreateRequestMessageHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/LoginRequestMessageHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/handler/QuitHandler.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/UserService.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/UserServiceFactory.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/service/UserServiceMemoryImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/Group.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/GroupSession.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/GroupSessionFactory.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/GroupSessionMemoryImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/Session.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/SessionFactory.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/session/SessionMemoryImpl.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/OnlyTest.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/TestAlgorithm.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/TestBacklogServer.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/TestConnectionTimeout.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/test/TestMessageCodec.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/utils/ByteBufferUtil.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/client/RpcClientPlus.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/client/RpcClientPlus.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/handler/RpcRequestMessageHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/handler/RpcRequestMessageHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/RpcServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/study/rpc/server/RpcServer.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,19 +44,19 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "D:/GitHubProject/JUCNotes/NettyStudy/src/main/java/org/study/rpc/test",
-    "project.structure.last.edited": "Modules",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "configurable.group.build"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/GitHubProject/JUCNotes/NettyStudy/src/main/java/org/study/rpc/test&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Modules&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;configurable.group.build&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="D:\GitHubProject\JUCNotes\NettyStudy\src\main\java\org\study\rpc\test" />
@@ -197,7 +146,8 @@
       <workItem from="1671770171254" duration="5582000" />
       <workItem from="1672212631774" duration="5650000" />
       <workItem from="1672289588788" duration="12669000" />
-      <workItem from="1672374881743" duration="15522000" />
+      <workItem from="1672374881743" duration="16209000" />
+      <workItem from="1672460525796" duration="2713000" />
     </task>
     <servers />
   </component>

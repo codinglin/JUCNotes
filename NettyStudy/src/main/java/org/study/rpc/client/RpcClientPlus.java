@@ -28,7 +28,7 @@ CTRL + ALT + L 整理代码
 @Slf4j
 public class RpcClientPlus {
 
-    private static Channel channel = null;
+    private static volatile Channel channel = null;
     private static final Object LOCK = new Object();
 
     public static void main(String[] args) {
@@ -45,7 +45,7 @@ public class RpcClientPlus {
         );*/
 
         final HelloService service = getProxyService(HelloService.class);
-        log.debug("11111111111111111111111111111111111111111111111111111111111111111111111111");
+        log.debug("---------------------------------");
 
         service.sayHello("在不在！");
 //        service.sayHello("嘿！");
@@ -60,8 +60,7 @@ public class RpcClientPlus {
     public static <T> T getProxyService(Class<T> serviceClass){
         // 类加载器， 代理的实现接口的数组，
         ClassLoader loader = serviceClass.getClassLoader();
-        Class[] interfaces = {serviceClass};
-        log.debug("AAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+        Class<?>[] interfaces = {serviceClass};
         final int nextId = SequenceIdGenerator.nextId();
         //                                                                  sayHello "你好！"
         final Object o = Proxy.newProxyInstance(loader, interfaces, (proxy,  method,  args) -> {
@@ -74,19 +73,15 @@ public class RpcClientPlus {
                     method.getParameterTypes(),
                     args
             );
-            log.debug("22222222222222222222222222222222222222222222222222222222222222222222222222");
-
             // 2. 将消息对象 发送 出去               【但是 一时半会 结果不过来】
             getChannel().writeAndFlush(msg);
 
             // 3. 准备一个Promise对象 来接收结果      【指定 Promise对象 【异步】接受结果的线程】  【这里不会阻塞住，所以下面得阻塞等待结果】
             DefaultPromise<Object> promise = new DefaultPromise<>(getChannel().eventLoop());
             RpcResponseMessageHandler.PROMISES.put(nextId, promise);
-            log.debug("33333333333333333333333333333333333333333333333333333333333333333333333333");
 
             // 4. await()不会抛异常， 【【【 同步阻塞 等待promise的结果(成功or失败) 】】】
             promise.await();
-            log.debug("55555555555555555555555555555555555555555555555555555555555555555555555555");
 
             if(promise.isSuccess()){
                 // 调用正常
@@ -96,7 +91,6 @@ public class RpcClientPlus {
                 throw new RuntimeException(promise.cause());
             }
         });
-        log.debug("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
         // 返回 被代理的对象
         return (T) o;
     }
@@ -126,7 +120,7 @@ public class RpcClientPlus {
     private static void initChannel() {
         NioEventLoopGroup group = new NioEventLoopGroup();
         LoggingHandler LOGGING_HANDLER = new LoggingHandler(LogLevel.DEBUG);
-        MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable(); // 【使用 asm包方法】
+        MessageCodecSharable MESSAGE_CODEC = new MessageCodecSharable();
 
         // rpc 响应消息处理器，待实现
         RpcResponseMessageHandler RPC_RESPONSE_HANDLER = new RpcResponseMessageHandler();
@@ -137,7 +131,7 @@ public class RpcClientPlus {
         bootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
-                ch.pipeline().addLast(new ProtocolFrameDecoder()); // 【使用 asm包方法】
+                ch.pipeline().addLast(new ProtocolFrameDecoder());
                 ch.pipeline().addLast(LOGGING_HANDLER);
                 ch.pipeline().addLast(MESSAGE_CODEC);
                 ch.pipeline().addLast(RPC_RESPONSE_HANDLER);

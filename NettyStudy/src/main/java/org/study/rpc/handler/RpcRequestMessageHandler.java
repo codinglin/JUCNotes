@@ -36,7 +36,7 @@ public class RpcRequestMessageHandler extends SimpleChannelInboundHandler<RpcReq
             response.setReturnValue(invoke);
 
         } catch (Exception e) {
-            log.debug("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx 出异常了 xxxxxxxxxxxxxxxxxxxxxxxxxx");
+            log.debug("-------------------- 出异常了 --------------------");
             e.printStackTrace();
 //            response.setExceptionValue(e);                         【e.getCause() 拿到问题的起因】
             response.setExceptionValue(new Exception("远程调用出错：" + e.getCause().getMessage()));
