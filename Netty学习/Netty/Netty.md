@@ -2428,3 +2428,40 @@ new ServerBootstrap().childOption(ChannelOption.ALLOCATOR, new PooledByteBufAllo
 
 见项目源码
 
+# 六、源码
+
+## 1、启动流程
+
+Netty启动流程可以简化成如下代码
+
+```java
+// netty 中使用 NioEventLoopGroup （简称 nio boss 线程）来封装线程和 selector
+Selector selector = Selector.open(); 
+
+// 创建 NioServerSocketChannel，同时会初始化它关联的 handler，以及为原生 ssc 存储 config
+NioServerSocketChannel attachment = new NioServerSocketChannel();
+
+// 创建 NioServerSocketChannel 时，创建了 java 原生的 ServerSocketChannel
+ServerSocketChannel serverSocketChannel = ServerSocketChannel.open(); 
+serverSocketChannel.configureBlocking(false);
+
+// 启动 nio boss 线程执行接下来的操作
+
+//注册（仅关联 selector 和 NioServerSocketChannel），未关注事件
+SelectionKey selectionKey = serverSocketChannel.register(selector, 0, attachment);
+
+// head -> 初始化器 -> ServerBootstrapAcceptor -> tail，初始化器是一次性的，只为添加 acceptor
+
+// 绑定端口
+serverSocketChannel.bind(new InetSocketAddress(8080));
+
+// 触发 channel active 事件，在 head 中关注 op_accept 事件
+selectionKey.interestOps(SelectionKey.OP_ACCEPT);
+```
+
+- 获得选择器Selector，Netty中使用NioEventloopGroup中的NioEventloop封装了线程和选择器
+- 创建`NioServerSocketChannel`，该Channel**作为附件**添加到`ServerSocketChannel`中
+- 创建`ServerSocketChannel`，将其设置为非阻塞模式，并注册到Selector中，**此时未关注事件，但是添加了附件**`NioServerSocketChannel`
+- 绑定端口
+- 通过`interestOps`设置感兴趣的事件
+
