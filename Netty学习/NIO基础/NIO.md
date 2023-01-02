@@ -2112,3 +2112,5 @@ AIO 用来解决数据复制阶段的阻塞问题
 > - Windows 系统通过 IOCP **实现了真正的异步 IO**
 > - Linux 系统异步 IO 在 2.6 版本引入，但其**底层实现还是用多路复用模拟了异步 IO，性能没有优势**
 
+转载自：https://nyimac.gitee.io/2021/04/18/Netty%E5%AD%A6%E4%B9%A0%E4%B9%8BNIO%E5%9F%BA%E7%A1%80/
+
