@@ -1700,7 +1700,7 @@ LockSupport 类方法：
 - `LockSupport.park()`：暂停当前线程，挂起原语
 - `LockSupport.unpark(暂停的线程对象)`：恢复某个线程的运行
 
-```
+```java
 public static void main(String[] args) {
     Thread t1 = new Thread(() -> {
         System.out.println("start...");	//1
@@ -1758,10 +1758,10 @@ public class Main{
             pu.print("a", t2);
         });
         t2 = new Thread(() -> {
-            pu.print("a", t3);
+            pu.print("b", t3);
         });
         t3 = new Thread(() -> {
-            pu.print("a", t1);
+            pu.print("c", t1);
         });
         t1.start();
         t2.start();
