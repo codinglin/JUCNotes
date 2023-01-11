@@ -4696,13 +4696,13 @@ SynchronousQueue 是一个不存储元素的 BlockingQueue，**每一个生产�
 
 - 运行当前程序的平台拥有 CPU 的数量：
 
-  ```
+  ```java
   static final int NCPUS = Runtime.getRuntime().availableProcessors()
   ```
 
 - 指定超时时间后，当前线程最大自旋次数：
 
-  ```
+  ```java
   // 只有一个 CPU 时自旋次数为 0，所有程序都是串行执行，多核 CPU 时自旋 32 次是一个经验值
   static final int maxTimedSpins = (NCPUS < 2) ? 0 : 32;
   ```
@@ -4711,13 +4711,13 @@ SynchronousQueue 是一个不存储元素的 BlockingQueue，**每一个生产�
 
 - 未指定超时时间，当前线程最大自旋次数：
 
-  ```
+  ```java
   static final int maxUntimedSpins = maxTimedSpins * 16;	// maxTimedSpins 的 16 倍
   ```
 
 - 指定超时限制的阈值，小于该值的线程不会被挂起：
 
-  ```
+  ```java
   static final long spinForTimeoutThreshold = 1000L;	// 纳秒
   ```
 
@@ -4725,7 +4725,7 @@ SynchronousQueue 是一个不存储元素的 BlockingQueue，**每一个生产�
 
 - 转换器：
 
-  ```
+  ```java
   private transient volatile Transferer<E> transferer;
   abstract static class Transferer<E> {
       /**
@@ -4742,7 +4742,7 @@ SynchronousQueue 是一个不存储元素的 BlockingQueue，**每一个生产�
 
 - 构造方法：
 
-  ```
+  ```java
   public SynchronousQueue(boolean fair) {
       // fair 默认 false
       // 非公平模式实现的数据结构是栈，公平模式的数据结构是队列
@@ -4752,7 +4752,7 @@ SynchronousQueue 是一个不存储元素的 BlockingQueue，**每一个生产�
 
 - 成员方法：
 
-  ```
+  ```java
   public boolean offer(E e) {
       if (e == null) throw new NullPointerException();
       return transferer.transfer(e, true, 0) != null;
@@ -4772,7 +4772,7 @@ TransferStack 类成员变量：
 
 - 请求类型：
 
-  ```
+  ```java
   // 表示 Node 类型为请求类型
   static final int REQUEST    = 0;
   // 表示 Node类 型为数据类型
@@ -4785,7 +4785,7 @@ TransferStack 类成员变量：
 
 - 栈顶元素：
 
-  ```
+  ```java
   volatile SNode head;
   ```
 
@@ -4793,7 +4793,7 @@ TransferStack 类成员变量：
 
 - 成员变量：
 
-  ```
+  ```java
   static final class SNode {
       // 指向下一个栈帧
       volatile SNode next; 
@@ -4812,7 +4812,7 @@ TransferStack 类成员变量：
 
 - 构造方法：
 
-  ```
+  ```java
   SNode(Object item) {
       this.item = item;
   }
@@ -4820,7 +4820,7 @@ TransferStack 类成员变量：
 
 - 设置方法：设置 Node 对象的 next 字段，此处**对 CAS 进行了优化**，提升了 CAS 的效率
 
-  ```
+  ```java
   boolean casNext(SNode cmp, SNode val) {
       //【优化：cmp == next】，可以提升一部分性能。 cmp == next 不相等，就没必要走 cas指令。
       return cmp == next && UNSAFE.compareAndSwapObject(this, nextOffset, cmp, val);
@@ -4829,7 +4829,7 @@ TransferStack 类成员变量：
 
 - 匹配方法：
 
-  ```
+  ```java
   boolean tryMatch(SNode s) {
       // 当前 node 尚未与任何节点发生过匹配，CAS 设置 match 字段为 s 节点，表示当前 node 已经被匹配
       if (match == null && UNSAFE.compareAndSwapObject(this, matchOffset, null, s)) {
@@ -4851,7 +4851,7 @@ TransferStack 类成员变量：
 
 - 取消方法：
 
-  ```
+  ```java
   // 取消节点的方法
   void tryCancel() {
       // match 字段指向自己，表示这个 node 是取消状态，取消状态的 node，最终会被强制移除出栈
@@ -4867,7 +4867,7 @@ TransferStack 类成员方法：
 
 - snode()：填充节点方法
 
-  ```
+  ```java
   static SNode snode(SNode s, Object e, SNode next, int mode) {
       // 引用指向空时，snode 方法会创建一个 SNode 对象 
       if (s == null) s = new SNode(e);
@@ -4880,7 +4880,7 @@ TransferStack 类成员方法：
 
 - transfer()：核心方法，请求匹配出栈，不匹配阻塞
 
-  ```
+  ```java
   E transfer(E e, boolean timed, long nanos) {
   	// 包装当前线程的 node
       SNode s = null;
@@ -4970,7 +4970,7 @@ TransferStack 类成员方法：
 
 - awaitFulfill()：阻塞当前线程等待被匹配，返回匹配的节点，或者被取消的节点
 
-  ```
+  ```java
   SNode awaitFulfill(SNode s, boolean timed, long nanos) {
       // 等待的截止时间
       final long deadline = timed ? System.nanoTime() + nanos : 0L;
@@ -5015,7 +5015,7 @@ TransferStack 类成员方法：
   }
   ```
 
-  ```
+  ```java
   boolean shouldSpin(SNode s) {
       // 获取栈顶
       SNode h = head;
@@ -5028,7 +5028,7 @@ TransferStack 类成员方法：
 
 - clear()：指定节点出栈
 
-  ```
+  ```java
   void clean(SNode s) {
       // 清空数据域和关联线程
       s.item = null;
@@ -5066,19 +5066,19 @@ TransferQueue 类成员变量：
 
 - 指向队列的 dummy 节点：
 
-  ```
+  ```java
   transient volatile QNode head;
   ```
 
 - 指向队列的尾节点：
 
-  ```
+  ```java
   transient volatile QNode tail;
   ```
 
 - 被清理节点的前驱节点：
 
-  ```
+  ```java
   transient volatile QNode cleanMe;
   ```
 
@@ -5088,7 +5088,7 @@ TransferQueue 内部类：
 
 - QNode：
 
-  ```
+  ```java
   static final class QNode {
       // 指向当前节点的下一个节点
       volatile QNode next;
@@ -5127,7 +5127,7 @@ TransferQueue 类成员方法：
 
 - 设置头尾节点：
 
-  ```
+  ```java
   void advanceHead(QNode h, QNode nh) {
       // 设置头指针指向新的节点，
       if (h == head && UNSAFE.compareAndSwapObject(this, headOffset, h, nh))
@@ -5143,7 +5143,7 @@ TransferQueue 类成员方法：
 
 - transfer()：核心方法
 
-  ```
+  ```java
   E transfer(E e, boolean timed, long nanos) {
       // s 指向当前请求对应的 node
       QNode s = null;
@@ -5226,7 +5226,7 @@ TransferQueue 类成员方法：
 
 - awaitFulfill()：阻塞当前线程等待被匹配
 
-  ```
+  ```java
   Object awaitFulfill(QNode s, E e, boolean timed, long nanos) {
       // 表示等待截止时间
       final long deadline = timed ? System.nanoTime() + nanos : 0L;
@@ -5282,13 +5282,13 @@ TransferQueue 类成员方法：
 
 存放线程的容器：
 
-```
+```java
 private final HashSet<Worker> workers = new HashSet<Worker>();
 ```
 
 构造方法：
 
-```
+```java
 public ThreadPoolExecutor(int corePoolSize,
                           int maximumPoolSize,
                           long keepAliveTime,
@@ -5351,7 +5351,7 @@ Executors 提供了四种线程池的创建：newCachedThreadPool、newFixedThre
 
 - newFixedThreadPool：创建一个拥有 n 个线程的线程池
 
-  ```
+  ```java
   public static ExecutorService newFixedThreadPool(int nThreads) {
       return new ThreadPoolExecutor(nThreads, nThreads, 0L, TimeUnit.MILLISECONDS,
                                     new LinkedBlockingQueue<Runnable>());
@@ -5364,7 +5364,7 @@ Executors 提供了四种线程池的创建：newCachedThreadPool、newFixedThre
 
 - newCachedThreadPool：创建一个可扩容的线程池
 
-  ```
+  ```java
   public static ExecutorService newCachedThreadPool() {
       return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
                                     new SynchronousQueue<Runnable>());
@@ -5377,7 +5377,7 @@ Executors 提供了四种线程池的创建：newCachedThreadPool、newFixedThre
 
 - newSingleThreadExecutor：创建一个只有 1 个线程的单线程池
 
-  ```
+  ```java
   public static ExecutorService newSingleThreadExecutor() {
       return new FinalizableDelegatedExecutorService
           (new ThreadPoolExecutor(1, 1,0L, TimeUnit.MILLISECONDS,
@@ -5479,7 +5479,7 @@ execute 会直接抛出任务执行时的异常，submit 会吞掉异常，有�
 
 方法 1：主动捉异常
 
-```
+```java
 ExecutorService executorService = Executors.newFixedThreadPool(1);
 pool.submit(() -> {
     try {
@@ -5493,7 +5493,7 @@ pool.submit(() -> {
 
 方法 2：使用 Future 对象
 
-```
+```java
 ExecutorService executorService = Executors.newFixedThreadPool(1);
 Future<?> future = pool.submit(() -> {
     System.out.println("task1");
@@ -5526,7 +5526,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - 四种状态：
 
-  ```
+  ```java
   // 111 000000000000000000，转换成整数后其实就是一个【负数】
   private static final int RUNNING    = -1 << COUNT_BITS;
   // 000 000000000000000000
@@ -5549,7 +5549,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - 获取当前线程池运行状态：
 
-  ```
+  ```java
   // ~CAPACITY = ~000 11111111111111111111 = 111 000000000000000000000（取反）
   // c == ctl = 111 000000000000000000111
   // 111 000000000000000000111
@@ -5560,7 +5560,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - 获取当前线程池线程数量：
 
-  ```
+  ```java
   //        c = 111 000000000000000000111
   // CAPACITY = 000 111111111111111111111
   //            000 000000000000000000111 => 7
@@ -5569,14 +5569,14 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - 重置当前线程池状态 ctl：
 
-  ```
+  ```java
   // rs 表示线程池状态，wc 表示当前线程池中 worker（线程）数量，相与以后就是合并后的状态
   private static int ctlOf(int rs, int wc) { return rs | wc; }
   ```
 
 - 比较当前线程池 ctl 所表示的状态：
 
-  ```
+  ```java
   // 比较当前线程池 ctl 所表示的状态，是否小于某个状态 s
   // 状态对比：RUNNING < SHUTDOWN < STOP < TIDYING < TERMINATED
   private static boolean runStateLessThan(int c, int s) { return c < s; }
@@ -5588,7 +5588,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - 设置线程池 ctl：
 
-  ```
+  ```java
   // 使用 CAS 方式 让 ctl 值 +1 ，成功返回 true, 失败返回 false
   private boolean compareAndIncrementWorkerCount(int expect) {
       return ctl.compareAndSet(expect, expect + 1);
@@ -5611,27 +5611,27 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - **线程池中存放 Worker 的容器**：线程池没有初始化，直接往池中加线程即可
 
-  ```
+  ```java
   private final HashSet<Worker> workers = new HashSet<Worker>();
   ```
 
 - 线程全局锁：
 
-  ```
+  ```java
   // 增加减少 worker 或者时修改线程池运行状态需要持有 mainLock
   private final ReentrantLock mainLock = new ReentrantLock();
   ```
 
 - 可重入锁的条件变量：
 
-  ```
+  ```java
   // 当外部线程调用 awaitTermination() 方法时，会等待当前线程池状态为 Termination 为止
   private final Condition termination = mainLock.newCondition()
   ```
 
 - 线程池相关参数：
 
-  ```
+  ```java
   private volatile int corePoolSize;				// 核心线程数量
   private volatile int maximumPoolSize;			// 线程池最大线程数量
   private volatile long keepAliveTime;			// 空闲线程存活时间
@@ -5639,21 +5639,21 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
   private final BlockingQueue<Runnable> workQueue;// 【超过核心线程提交任务就放入 阻塞队列】
   ```
 
-  ```
+  ```java
   private volatile RejectedExecutionHandler handler;	// 拒绝策略，juc包提供了4中方式
   private static final RejectedExecutionHandler defaultHandler = new AbortPolicy();// 默认策略
   ```
 
 - 记录线程池相关属性的数值：
 
-  ```
+  ```java
   private int largestPoolSize;		// 记录线程池生命周期内线程数最大值
   private long completedTaskCount;	// 记录线程池所完成任务总数，当某个 worker 退出时将完成的任务累加到该属性
   ```
 
 - 控制**核心线程数量内的线程是否可以被回收**：
 
-  ```
+  ```java
   // false（默认）代表不可以，为 true 时核心线程空闲超过 keepAliveTime 也会被回收
   // allowCoreThreadTimeOut(boolean value) 方法可以设置该值
   private volatile boolean allowCoreThreadTimeOut;
@@ -5663,7 +5663,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - Worker 类：**每个 Worker 对象会绑定一个初始任务**，启动 Worker 时优先执行，这也是造成线程池不公平的原因。Worker 继承自 AQS，本身具有锁的特性，采用独占锁模式，state = 0 表示未被占用，> 0 表示被占用，< 0 表示初始状态不能被抢锁
 
-  ```
+  ```java
   private final class Worker extends AbstractQueuedSynchronizer implements Runnable {
   	final Thread thread;			// worker 内部封装的工作线程
       Runnable firstTask;				// worker 第一个执行的任务，普通的 Runnable 实现类或者是 FutureTask
@@ -5689,7 +5689,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
   }
   ```
 
-  ```
+  ```java
   public Thread newThread(Runnable r) {
       // 将当前 worker 指定为 thread 的执行方法，线程调用 start 会调用 r.run()
       Thread t = new Thread(group, r, namePrefix + threadNumber.getAndIncrement(), 0);
@@ -5711,7 +5711,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - AbstractExecutorService#submit()：提交任务，**把 Runnable 或 Callable 任务封装成 FutureTask 执行**，可以通过方法返回的任务对象，调用 get 阻塞获取任务执行的结果或者异常，源码分析在笔记的 Future 部分
 
-  ```
+  ```java
   public Future<?> submit(Runnable task) {
       // 空指针异常
       if (task == null) throw new NullPointerException();
@@ -5732,7 +5732,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
   }
   ```
 
-  ```
+  ```java
   protected <T> RunnableFuture<T> newTaskFor(Runnable runnable, T value) {
       // Runnable 封装成 FutureTask，【指定返回值】
       return new FutureTask<T>(runnable, value);
@@ -5745,7 +5745,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - execute()：执行任务，**但是没有返回值，没办法获取任务执行结果**，出现异常会直接抛出任务执行时的异常。根据线程池中的线程数，选择添加任务时的处理方式
 
-  ```
+  ```java
   // command 可以是普通的 Runnable 实现类，也可以是 FutureTask，不能是 Callable
   public void execute(Runnable command) {
       // 非空判断
@@ -5791,7 +5791,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - prestartAllCoreThreads()：**提前预热**，创建所有的核心线程
 
-  ```
+  ```java
   public int prestartAllCoreThreads() {
       int n = 0;
       while (addWorker(null, true))
@@ -5804,7 +5804,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
   注意：SHUTDOWN 状态也能添加线程，但是要求新加的 Woker 没有 firstTask，而且当前 queue 不为空，所以创建一个线程来帮助线程池执行队列中的任务
 
-  ```
+  ```java
   // core == true 表示采用核心线程数量限制，false 表示采用 maximumPoolSize
   private boolean addWorker(Runnable firstTask, boolean core) {
       // 自旋【判断当前线程池状态是否允许创建线程】，允许就设置线程数量 + 1
@@ -5900,7 +5900,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - addWorkerFailed()：清理任务
 
-  ```
+  ```java
   private void addWorkerFailed(Worker w) {
       final ReentrantLock mainLock = this.mainLock;
       // 持有线程池全局锁，因为操作的是线程池相关的东西
@@ -5926,7 +5926,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - Worker#run：Worker 实现了 Runnable 接口，当线程启动时，会调用 Worker 的 run() 方法
 
-  ```
+  ```java
   public void run() {
       // ThreadPoolExecutor#runWorker()
       runWorker(this);
@@ -5935,7 +5935,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - runWorker()：线程启动就要**执行任务**，会一直 while 循环获取任务并执行
 
-  ```
+  ```java
   final void runWorker(Worker w) {
       Thread wt = Thread.currentThread();	
       // 获取 worker 的 firstTask
@@ -5991,7 +5991,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - unlock()：重置锁
 
-  ```
+  ```java
   public void unlock() { release(1); }
   // 外部不会直接调用这个方法 这个方法是 AQS 内调用的，外部调用 unlock 时触发此方法
   protected boolean tryRelease(int unused) {
@@ -6003,7 +6003,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - getTask()：获取任务，线程空闲时间超过 keepAliveTime 就会被回收，判断的依据是**当前线程阻塞获取任务超过保活时间**，方法返回 null 就代表当前线程要被回收了，返回到 runWorker 执行线程退出逻辑。线程池具有担保机制，对于 RUNNING 状态下的超时回收，要保证线程池中最少有一个线程运行，或者任务阻塞队列已经是空
 
-  ```
+  ```java
   private Runnable getTask() {
       // 超时标记，表示当前线程获取任务是否超时，true 表示已超时
       boolean timedOut = false; 
@@ -6062,7 +6062,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - processWorkerExit()：**线程退出线程池**，也有担保机制，保证队列中的任务被执行
 
-  ```
+  ```java
   // 正常退出 completedAbruptly = false，异常退出为 true
   private void processWorkerExit(Worker w, boolean completedAbruptly) {
       // 条件成立代表当前 worker 是发生异常退出的，task 任务执行过程中向上抛出异常了
@@ -6111,7 +6111,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - shutdown()：停止线程池
 
-  ```
+  ```java
   public void shutdown() {
       final ReentrantLock mainLock = this.mainLock;
       // 获取线程池全局锁
@@ -6134,7 +6134,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - interruptIdleWorkers()：shutdown 方法会**中断所有空闲线程**，根据是否可以获取 AQS 独占锁判断是否处于工作状态。线程之所以空闲是因为阻塞队列没有任务，不会中断正在运行的线程，所以 shutdown 方法会让所有的任务执行完毕
 
-  ```
+  ```java
   // onlyOne == true 说明只中断一个线程 ，false 则中断所有线程
   private void interruptIdleWorkers(boolean onlyOne) {
       final ReentrantLock mainLock = this.mainLock;
@@ -6172,7 +6172,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - shutdownNow()：直接关闭线程池，不会等待任务执行完成
 
-  ```
+  ```java
   public List<Runnable> shutdownNow() {
       // 返回值引用
       List<Runnable> tasks;
@@ -6199,7 +6199,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 - tryTerminate()：设置为 TERMINATED 状态 if either (SHUTDOWN and pool and queue empty) or (STOP and pool empty)
 
-  ```
+  ```java
   final void tryTerminate() {
       for (;;) {
           // 获取 ctl 的值
@@ -6253,7 +6253,7 @@ ThreadPoolExecutor 使用 int 的**高 3 位来表示线程池状态，低 29 �
 
 FutureTask 未来任务对象，继承 Runnable、Future 接口，用于包装 Callable 对象，实现任务的提交
 
-```
+```java
 public static void main(String[] args) throws ExecutionException, InterruptedException {
     FutureTask<String> task = new FutureTask<>(new Callable<String>() {
         @Override
@@ -6269,7 +6269,7 @@ public static void main(String[] args) throws ExecutionException, InterruptedExc
 
 构造方法：
 
-```
+```java
 public FutureTask(Callable<V> callable){
 	this.callable = callable;	// 属性注入
     this.state = NEW; 			// 任务状态设置为 new
@@ -6310,7 +6310,7 @@ FutureTask 类的成员属性：
 
 - 任务状态：
 
-  ```
+  ```java
   // 表示当前task状态
   private volatile int state;
   // 当前任务尚未执行
@@ -6331,13 +6331,13 @@ FutureTask 类的成员属性：
 
 - 任务对象：
 
-  ```
+  ```java
   private Callable<V> callable;	// Runnable 使用装饰者模式伪装成 Callable
   ```
 
 - **存储任务执行的结果**，这是 run 方法返回值是 void 也可以获取到执行结果的原因：
 
-  ```
+  ```java
   // 正常情况下：任务正常执行结束，outcome 保存执行结果，callable 返回值
   // 非正常情况：callable 向上抛出异常，outcome 保存异常
   private Object outcome; 
@@ -6345,20 +6345,20 @@ FutureTask 类的成员属性：
 
 - 执行当前任务的线程对象：
 
-  ```
+  ```java
   private volatile Thread runner;	// 当前任务被线程执行期间，保存当前执行任务的线程对象引用
   ```
 
 - **线程阻塞队列的头节点**：
 
-  ```
+  ```java
   // 会有很多线程去 get 当前任务的结果，这里使用了一种数据结构头插头取（类似栈）的一个队列来保存所有的 get 线程
   private volatile WaitNode waiters;
   ```
 
 - 内部类：
 
-  ```
+  ```java
   static final class WaitNode {
       // 单向链表
       volatile Thread thread;
@@ -6375,7 +6375,7 @@ FutureTask 类的成员方法：
 
 - **FutureTask#run**：任务执行入口
 
-  ```
+  ```java
   public void run() {
       //条件一：成立说明当前 task 已经被执行过了或者被 cancel 了，非 NEW 状态的任务，线程就不需要处理了
       //条件二：线程是 NEW 状态，尝试设置当前任务对象的线程是当前线程，设置失败说明其他线程抢占了该任务，直接返回
@@ -6423,7 +6423,7 @@ FutureTask 类的成员方法：
 
   FutureTask#set：设置正常返回值，首先将任务状态设置为 COMPLETING 状态代表完成中，逻辑执行完设置为 NORMAL 状态代表任务正常执行完成，最后唤醒 get() 阻塞线程
 
-  ```
+  ```java
   protected void set(V v) {
       // CAS 方式设置当前任务状态为完成中，设置失败说明其他线程取消了该任务
       if (UNSAFE.compareAndSwapInt(this, stateOffset, NEW, COMPLETING)) {
@@ -6438,7 +6438,7 @@ FutureTask 类的成员方法：
 
   FutureTask#setException：设置异常返回值
 
-  ```
+  ```java
   protected void setException(Throwable t) {
       if (UNSAFE.compareAndSwapInt(this, stateOffset, NEW, COMPLETING)) {
           // 赋值给返回结果，用来向上层抛出来的异常
@@ -6452,7 +6452,7 @@ FutureTask 类的成员方法：
 
   FutureTask#finishCompletion：**唤醒 get() 阻塞线程**
 
-  ```
+  ```java
   private void finishCompletion() {
       // 遍历所有的等待的节点，q 指向头节点
       for (WaitNode q; (q = waiters) != null;) {
@@ -6486,7 +6486,7 @@ FutureTask 类的成员方法：
 
   FutureTask#handlePossibleCancellationInterrupt：任务中断处理
 
-  ```
+  ```java
   private void handlePossibleCancellationInterrupt(int s) {
       if (s == INTERRUPTING)
           // 中断状态中
@@ -6498,7 +6498,7 @@ FutureTask 类的成员方法：
 
 - **FutureTask#get**：获取任务执行的返回值，执行 run 和 get 的不是同一个线程，一般有多个线程 get，只有一个线程 run
 
-  ```
+  ```java
   public V get() throws InterruptedException, ExecutionException {
       // 获取当前任务状态
       int s = state;
@@ -6512,7 +6512,7 @@ FutureTask 类的成员方法：
 
   FutureTask#awaitDone：**get 线程封装成 WaitNode 对象进入阻塞队列阻塞等待**
 
-  ```
+  ```java
   private int awaitDone(boolean timed, long nanos) throws InterruptedException {
       // 0 不带超时
       final long deadline = timed ? System.nanoTime() + nanos : 0L;
@@ -6568,7 +6568,7 @@ FutureTask 类的成员方法：
 
   FutureTask#report：封装运行结果，可以获取 run() 方法中设置的成员变量 outcome，**这是 run 方法的返回值是 void 也可以获取到任务执行的结果的原因**
 
-  ```
+  ```java
   private V report(int s) throws ExecutionException {
       // 获取执行结果，是在一个 futuretask 对象中的属性，可以直接获取
       Object x = outcome;
@@ -6585,7 +6585,7 @@ FutureTask 类的成员方法：
 
 - FutureTask#cancel：任务取消，打断正在执行该任务的线程
 
-  ```
+  ```java
   public boolean cancel(boolean mayInterruptIfRunning) {
       // 条件一：表示当前任务处于运行中或者处于线程池任务队列中
       // 条件二：表示修改状态，成功可以去执行下面逻辑，否则返回 false 表示 cancel 失败
@@ -6623,7 +6623,7 @@ FutureTask 类的成员方法：
 
 Timer 实现定时功能，Timer 的优点在于简单易用，但由于所有任务都是由同一个线程来调度，因此所有任务都是串行执行的，同一时间只能有一个任务在执行，前一个任务的延迟或异常都将会影响到之后的任务
 
-```
+```java
 private static void method1() {
     Timer timer = new Timer();
     TimerTask task1 = new TimerTask() {
@@ -6660,7 +6660,7 @@ private static void method1() {
 
 构造方法：`Executors.newScheduledThreadPool(int corePoolSize)`
 
-```
+```java
 public ScheduledThreadPoolExecutor(int corePoolSize) {
     // 最大线程数固定为 Integer.MAX_VALUE，保活时间 keepAliveTime 固定为 0
     super(corePoolSize, Integer.MAX_VALUE, 0, NANOSECONDS,
@@ -6679,7 +6679,7 @@ public ScheduledThreadPoolExecutor(int corePoolSize) {
 
 - 延迟任务，但是出现异常并不会在控制台打印，也不会影响其他线程的执行
 
-  ```
+  ```java
   public static void main(String[] args){
       // 线程池大小为1时也是串行执行
       ScheduledExecutorService executor = Executors.newScheduledThreadPool(2);
@@ -6717,7 +6717,7 @@ public ScheduledThreadPoolExecutor(int corePoolSize) {
 
 - 定时任务 scheduleWithFixedDelay：**一次任务的结束到下一次任务的启动之间**等于间隔时间，抢占到 CPU 就会立即执行，这个方法才是真正的设置两个任务之间的间隔
 
-  ```
+  ```java
   public static void main(String[] args){
       ScheduledExecutorService pool = Executors.newScheduledThreadPool(3);
       System.out.println("start..." + new Date());
@@ -6741,26 +6741,26 @@ public ScheduledThreadPoolExecutor(int corePoolSize) {
 
 - shutdown 后是否继续执行周期任务：
 
-  ```
+  ```java
   private volatile boolean continueExistingPeriodicTasksAfterShutdown;
   ```
 
 - shutdown 后是否继续执行延迟任务：
 
-  ```
+  ```java
   private volatile boolean executeExistingDelayedTasksAfterShutdown = true;
   ```
 
 - 取消方法是否将该任务从队列中移除：
 
-  ```
+  ```java
   // 默认 false，不移除，等到线程拿到任务之后抛弃
   private volatile boolean removeOnCancel = false;
   ```
 
 - 任务的序列号，可以用来比较优先级：
 
-  ```
+  ```java
   private static final AtomicLong sequencer = new AtomicLong();
   ```
 
@@ -6776,13 +6776,13 @@ ScheduledFutureTask 继承 FutureTask，实现 RunnableScheduledFuture 接口，
 
 - 任务序列号：
 
-  ```
+  ```java
   private final long sequenceNumber;
   ```
 
 - 执行时间：
 
-  ```
+  ```java
   private long time;			// 任务可以被执行的时间，交付时间，以纳秒表示
   private final long period;	// 0 表示非周期任务，正数表示 fixed-rate 模式的周期，负数表示 fixed-delay 模式
   ```
@@ -6791,13 +6791,13 @@ ScheduledFutureTask 继承 FutureTask，实现 RunnableScheduledFuture 接口，
 
 - 实际的任务对象：
 
-  ```
+  ```java
   RunnableScheduledFuture<V> outerTask = this;
   ```
 
 - 任务在队列数组中的索引下标：
 
-  ```
+  ```java
   // DelayedWorkQueue 底层使用的数据结构是最小堆，记录当前任务在堆中的索引，-1 代表删除
   int heapIndex;
   ```
@@ -6806,7 +6806,7 @@ ScheduledFutureTask 继承 FutureTask，实现 RunnableScheduledFuture 接口，
 
 - 构造方法：
 
-  ```
+  ```java
   ScheduledFutureTask(Runnable r, V result, long ns, long period) {
       super(r, result);
       // 任务的触发时间
@@ -6820,7 +6820,7 @@ ScheduledFutureTask 继承 FutureTask，实现 RunnableScheduledFuture 接口，
 
 - compareTo()：ScheduledFutureTask 根据执行时间 time 正序排列，如果执行时间相同，在按照序列号 sequenceNumber 正序排列，任务需要放入 DelayedWorkQueue，延迟队列中使用该方法按照从小到大进行排序
 
-  ```
+  ```java
   public int compareTo(Delayed other) {
       if (other == this) // compare zero if same object
           return 0;
@@ -6849,7 +6849,7 @@ ScheduledFutureTask 继承 FutureTask，实现 RunnableScheduledFuture 接口，
 
 - run()：执行任务，非周期任务直接完成直接结束，**周期任务执行完后会设置下一次的执行时间，重新放入线程池的阻塞队列**，如果线程池中的线程数量少于核心线程，就会添加 Worker 开启新线程
 
-  ```
+  ```java
   public void run() {
       // 是否周期性，就是判断 period 是否为 0
       boolean periodic = isPeriodic();
@@ -6871,7 +6871,7 @@ ScheduledFutureTask 继承 FutureTask，实现 RunnableScheduledFuture 接口，
 
   周期任务正常完成后**任务的状态不会变化**，依旧是 NEW，不会设置 outcome 属性。但是如果本次任务执行出现异常，会进入 setException 方法将任务状态置为异常，把异常保存在 outcome 中，方法返回 false，后续的该任务将不会再周期的执行
 
-  ```
+  ```java
   protected boolean runAndReset() {
       // 任务不是新建的状态了，或者被别的线程执行了，直接返回 false
       if (state != NEW ||
@@ -6904,7 +6904,7 @@ ScheduledFutureTask 继承 FutureTask，实现 RunnableScheduledFuture 接口，
   }
   ```
 
-  ```
+  ```java
   // 任务下一次的触发时间
   private void setNextRunTime() {
       long p = period;
@@ -6919,7 +6919,7 @@ ScheduledFutureTask 继承 FutureTask，实现 RunnableScheduledFuture 接口，
 
 - reExecutePeriodic()**：准备任务的下一次执行，重新放入阻塞任务队列**
 
-  ```
+  ```java
   // ScheduledThreadPoolExecutor#reExecutePeriodic
   void reExecutePeriodic(RunnableScheduledFuture<?> task) {
       if (canRunInCurrentRunState(true)) {
@@ -6938,7 +6938,7 @@ ScheduledFutureTask 继承 FutureTask，实现 RunnableScheduledFuture 接口，
 
 - cancel()：取消任务
 
-  ```
+  ```java
   public boolean cancel(boolean mayInterruptIfRunning) {
       // 调用父类 FutureTask#cancel 来取消任务
       boolean cancelled = super.cancel(mayInterruptIfRunning);
@@ -6962,7 +6962,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - 容量：
 
-  ```
+  ```java
   private static final int INITIAL_CAPACITY = 16;			// 初始容量
   private int size = 0;									// 节点数量
   private RunnableScheduledFuture<?>[] queue = 
@@ -6971,7 +6971,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - 锁：
 
-  ```
+  ```java
   private final ReentrantLock lock = new ReentrantLock();	// 控制并发
   private final Condition available = lock.newCondition();// 条件队列
   ```
@@ -6981,7 +6981,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
   - 如果未被占用，则当前线程占用该字段，然后当前线程到 available 条件队列指定超时时间 `堆顶任务.time - now()` 挂起
   - 如果被占用，当前线程直接到 available 条件队列不指定超时时间的挂起
 
-  ```
+  ```java
   // leader 在 available 条件队列内是首元素，它超时之后会醒过来，然后再次将堆顶元素获取走，获取走之后，take()结束之前，会调用是 available.signal() 唤醒下一个条件队列内的等待者，然后释放 lock，下一个等待者被唤醒后去到 AQS 队列，做 acquireQueue(node) 逻辑
   private Thread leader = null;
   ```
@@ -6990,7 +6990,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - offer()：插入节点
 
-  ```
+  ```java
   public boolean offer(Runnable x) {
       // 判空
       if (x == null)
@@ -7033,7 +7033,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
   }
   ```
 
-  ```
+  ```java
   // 插入新节点后对堆进行调整，进行节点上移，保持其特性【节点的值小于子节点的值】，小顶堆
   private void siftUp(int k, RunnableScheduledFuture<?> key) {
       while (k > 0) {
@@ -7054,7 +7054,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - poll()：非阻塞获取头结点，**获取执行时间最近并且可以执行的**
 
-  ```
+  ```java
   // 非阻塞获取
   public RunnableScheduledFuture<?> poll() {
       final ReentrantLock lock = this.lock;
@@ -7074,7 +7074,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
   }
   ```
 
-  ```
+  ```java
   private RunnableScheduledFuture<?> finishPoll(RunnableScheduledFuture<?> f) {
       // 获取尾索引
       int s = --size;
@@ -7094,7 +7094,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - take()：阻塞获取头节点，读取当前堆中最小的也就是触发时间最近的任务
 
-  ```
+  ```java
   public RunnableScheduledFuture<?> take() throws InterruptedException {
       final ReentrantLock lock = this.lock;
       // 保证线程安全
@@ -7148,7 +7148,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - remove()：删除节点，堆移除一个元素的时间复杂度是 O(log n)，**延迟任务维护了 heapIndex**，直接访问的时间复杂度是 O(1)，从而可以更快的移除元素，任务在队列中被取消后会进入该逻辑
 
-  ```
+  ```java
   public boolean remove(Object x) {
       final ReentrantLock lock = this.lock;
       lock.lock();
@@ -7189,14 +7189,14 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - schedule()：延迟执行方法，并指定执行的时间，默认是当前时间
 
-  ```
+  ```java
   public void execute(Runnable command) {
       // 以零延时任务的形式实现
       schedule(command, 0, NANOSECONDS);
   }
   ```
 
-  ```
+  ```java
   public ScheduledFuture<?> schedule(Runnable command, long delay, TimeUnit unit) {
       // 判空
       if (command == null || unit == null) throw new NullPointerException();
@@ -7209,7 +7209,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
   }
   ```
 
-  ```
+  ```java
   // 返回【当前时间 + 延迟时间】，就是触发当前任务执行的时间
   private long triggerTime(long delay, TimeUnit unit) {
       // 设置触发的时间
@@ -7224,7 +7224,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
   overflowFree 的原因：如果某个任务的 delay 为负数，说明当前可以执行（其实早该执行了）。阻塞队列中维护任务顺序是基于 compareTo 比较的，比较两个任务的顺序会用 time 相减。那么可能出现一个 delay 为正数减去另一个为负数的 delay，结果上溢为负数，则会导致 compareTo 产生错误的结果
 
-  ```
+  ```java
   private long overflowFree(long delay) {
       Delayed head = (Delayed) super.getQueue().peek();
       if (head != null) {
@@ -7241,7 +7241,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - scheduleAtFixedRate()：定时执行，一次任务的启动到下一次任务的启动的间隔
 
-  ```
+  ```java
   public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period,
                                                 TimeUnit unit) {
       if (command == null || unit == null)
@@ -7262,7 +7262,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - scheduleWithFixedDelay()：定时执行，一次任务的结束到下一次任务的启动的间隔
 
-  ```
+  ```java
   public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay,
                                                    TimeUnit unit) {
       if (command == null || unit == null) 
@@ -7285,7 +7285,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - delayedExecute()：**校验线程池状态**，延迟或周期性任务的主要执行方法
 
-  ```
+  ```java
   private void delayedExecute(RunnableScheduledFuture<?> task) {
       // 线程池是 SHUTDOWN 状态，需要执行拒绝策略
       if (isShutdown())
@@ -7305,7 +7305,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - ensurePrestart()：**开启线程执行任务**
 
-  ```
+  ```java
   // ThreadPoolExecutor#ensurePrestart
   void ensurePrestart() {
       int wc = workerCountOf(ctl.get());
@@ -7321,7 +7321,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - canRunInCurrentRunState()：任务运行时都会被调用以校验当前状态是否可以运行任务
 
-  ```
+  ```java
   boolean canRunInCurrentRunState(boolean periodic) {
       // 根据是否是周期任务判断，在线程池 shutdown 后是否继续执行该任务，默认非周期任务是继续执行的
       return isRunningOrShutdown(periodic ? continueExistingPeriodicTasksAfterShutdown :
@@ -7331,7 +7331,7 @@ DelayedWorkQueue 是支持延时获取元素的阻塞队列，内部采用优先
 
 - onShutdown()：删除并取消工作队列中的不需要再执行的任务
 
-  ```
+  ```java
   void onShutdown() {
       BlockingQueue<Runnable> q = super.getQueue();
       // shutdown 后是否仍然执行延时任务
@@ -7375,7 +7375,7 @@ Fork/Join：线程池的实现，体现是分治思想，适用于能够进行�
 - ForkJoin 使用 ForkJoinPool 来启动，是一个特殊的线程池，默认会创建与 CPU 核心数大小相同的线程池
 - 任务有返回值继承 RecursiveTask，没有返回值继承 RecursiveAction
 
-```
+```java
 public static void main(String[] args) {
     ForkJoinPool pool = new ForkJoinPool(4);
     System.out.println(pool.invoke(new MyTask(5)));
@@ -7413,7 +7413,7 @@ class MyTask extends RecursiveTask<Integer> {
 
 继续拆分优化：
 
-```
+```java
 class AddTask extends RecursiveTask<Integer> {
     int begin;
     int end;
