@@ -1437,9 +1437,58 @@ try{
 
 如果是不可重入锁，那么第二次获得锁时，自己也会被锁挡住
 
+源码解析参考：`nonfairTryAcquire(int acquires)) ` 和 `tryRelease(int releases)`
+
+```java
+static ReentrantLock lock = new ReentrantLock();
+public static void main(String[] args) {
+    method1();
+}
+public static void method1() {
+    lock.lock();
+    try {
+        System.out.println(Thread.currentThread().getName() + " execute method1");
+        method2();
+    } finally {
+        lock.unlock();
+    }
+}
+public static void method2() {
+    lock.lock();
+    try {
+        System.out.println(Thread.currentThread().getName() + " execute method2");
+    } finally {
+        lock.unlock();
+    }
+}
+```
+
+在 Lock 方法加两把锁会是什么情况呢？
+
+- 加锁两次解锁两次：正常执行
+- 加锁两次解锁一次：程序直接卡死，线程不能出来，也就说明**申请几把锁，最后需要解除几把锁**
+- 加锁一次解锁两次：运行程序会直接报错
+
 #### 可打断
 
+##### 基本使用
+
+`public void lockInterruptibly()`：获得可打断的锁
+
+- 如果没有竞争此方法就会获取 lock 对象锁
+- 如果有竞争就进入阻塞队列，可以被其他线程用 interrupt 打断
+
+注意：如果是不可中断模式，那么即使使用了 interrupt 也不会让等待状态中的线程中断
+
 #### 锁超时
+
+##### 基本使用
+
+`public boolean tryLock()`：尝试获取锁，获取到返回 true，获取不到直接放弃，不进入阻塞队列
+
+`public boolean tryLock(long timeout, TimeUnit unit)`：在给定时间内获取锁，获取不到就退出
+
+注意：tryLock 期间也可以被打断
 
 #### 公平锁
 
@@ -1452,6 +1501,10 @@ RenntrantLock lock = new ReentrantLock(true);
 ```
 
 公平锁一般没有必要，会降低并发度
+
+##### 公平原理
+
+与非公平锁主要区别在于 tryAcquire 方法：先检查 AQS 队列中是否有前驱节点，没有才去 CAS 竞争
 
 #### 条件变量
 
@@ -7546,3 +7599,133 @@ class MockConnection implements Connection {
 ```
 
 ------
+
+## 同步器
+
+### AQS
+
+#### 核心思想
+
+AQS：AbstractQueuedSynchronizer，是阻塞式锁和相关的同步器工具的框架，许多同步类实现都依赖于该同步器
+
+AQS 用状态属性来表示资源的状态（分**独占模式和共享模式**），子类需要定义如何维护这个状态，控制如何获取锁和释放锁
+
+- 独占模式是只有一个线程能够访问资源，如 ReentrantLock
+- 共享模式允许多个线程访问资源，如 Semaphore，ReentrantReadWriteLock 是组合式
+
+AQS 核心思想：
+
+- 如果被请求的共享资源空闲，则将当前请求资源的线程设置为有效的工作线程，并将共享资源设置锁定状态
+
+- 请求的共享资源被占用，AQS 用队列实现线程阻塞等待以及被唤醒时锁分配的机制，将暂时获取不到锁的线程加入到队列中
+
+  CLH 是一种基于单向链表的**高性能、公平的自旋锁**，AQS 是将每条请求共享资源的线程封装成一个 CLH 锁队列的一个结点（Node）来实现锁的分配
+
+![image-20230123102429998](JUC.assets/image-20230123102429998.png)
+
+#### 设计原理
+
+设计原理：
+
+- 获取锁：
+
+  ```java
+  while(state 状态不允许获取) {	// tryAcquire(arg)
+      if(队列中还没有此线程) {
+          入队并阻塞 park
+      }
+  }
+  当前线程出队
+  ```
+
+- 释放锁：
+
+  ```java
+  if(state 状态允许了) {	// tryRelease(arg)
+  	恢复阻塞的线程(s) unpark
+  }
+  ```
+
+AbstractQueuedSynchronizer 中 state 设计：
+
+- state 使用了 32bit int 来维护同步状态，独占模式 0 表示未加锁状态，大于 0 表示已经加锁状态
+
+  ```java
+  private volatile int state;
+  ```
+
+- state **使用 volatile 修饰配合 cas** 保证其修改时的原子性
+
+- state 表示**线程重入的次数（独占模式）或者剩余许可数（共享模式）**
+
+- state API：
+
+  - `protected final int getState()`：获取 state 状态
+  - `protected final void setState(int newState)`：设置 state 状态
+  - `protected final boolean compareAndSetState(int expect,int update)`：**CAS** 安全设置 state
+
+封装线程的 Node 节点中 waitstate 设计：
+
+- 使用 **volatile 修饰配合 CAS** 保证其修改时的原子性
+- 表示 Node 节点的状态，有以下几种状态：
+
+```java
+// 默认为 0
+volatile int waitStatus;
+// 由于超时或中断，此节点被取消，不会再改变状态
+static final int CANCELLED =  1;
+// 此节点后面的节点已（或即将）被阻止（通过park），【当前节点在释放或取消时必须唤醒后面的节点】
+static final int SIGNAL    = -1;
+// 此节点当前在条件队列中
+static final int CONDITION = -2;
+// 将releaseShared传播到其他节点
+static final int PROPAGATE = -3;
+```
+
+阻塞恢复设计：
+
+- 使用 park & unpark 来实现线程的暂停和恢复，因为命令的先后顺序不影响结果
+- park & unpark 是针对线程的，而不是针对同步器的，因此控制粒度更为精细
+- park 线程可以通过 interrupt 打断
+
+队列设计：
+
+- 使用了 FIFO 先入先出队列，并不支持优先级队列，**同步队列是双向链表，便于出队入队**
+
+```java
+// 头结点，指向哑元节点
+private transient volatile Node head;
+// 阻塞队列的尾节点，阻塞队列不包含头结点，从 head.next → tail 认为是阻塞队列
+private transient volatile Node tail;
+
+static final class Node {
+    // 枚举：共享模式
+    static final Node SHARED = new Node();
+    // 枚举：独占模式
+    static final Node EXCLUSIVE = null;
+    // node 需要构建成 FIFO 队列，prev 指向前继节点
+    volatile Node prev;
+    // next 指向后继节点
+    volatile Node next;
+    // 当前 node 封装的线程
+    volatile Thread thread;
+    // 条件队列是单向链表，只有后继指针，条件队列使用该属性
+    Node nextWaiter;
+}
+```
+
+<img src="JUC.assets/image-20230123161608936.png" alt="image-20230123161608936" style="zoom:67%;" />
+
+条件变量来实现等待、唤醒机制，支持多个条件变量，类似于 Monitor 的 WaitSet，**条件队列是单向链表**
+
+```java
+ public class ConditionObject implements Condition, java.io.Serializable {
+     // 指向条件队列的第一个 node 节点
+     private transient Node firstWaiter;
+     // 指向条件队列的最后一个 node 节点
+     private transient Node lastWaiter;
+ }
+```
+
+------
+
