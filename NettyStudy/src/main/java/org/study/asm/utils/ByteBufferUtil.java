@@ -1,5 +1,6 @@
 package org.study.asm.utils;
 
+import io.netty.util.internal.MathUtil;
 import io.netty.util.internal.StringUtil;
 
 import java.nio.ByteBuffer;
